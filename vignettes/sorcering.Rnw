@@ -1,0 +1,8 @@
+\documentclass{article}
+\usepackage{pdfpages}
+%\VignetteIndexEntry{Extended sorcering function documentation}
+%\VignettePackage{sorcering}
+
+\begin{document}
+\includepdf[pages=-, fitpaper=true]{sorcering_vignette.pdf}
+\end{document}

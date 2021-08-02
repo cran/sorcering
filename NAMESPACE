@@ -1,0 +1,5 @@
+useDynLib(sorcering, .registration=TRUE)
+import(mathjaxr)
+importFrom(Rcpp, evalCpp)
+importFrom(Rdpack,reprompt)
+exportPattern("^[[:alpha:]]+")
