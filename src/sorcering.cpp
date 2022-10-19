@@ -18,7 +18,7 @@ sorcering(
               const bool calcNbalance = false
              ) 
 {    
-    // sorcering V.0.9.2 July 2021
+    // sorcering V.0.9.2.2 October 2022
     // SORCERING: Soil ORganic Carbon & CN Ratio drIven Nitrogen modellinG framework
     // by 
     // Dr. Marc Scherstjanoi, Thünen Institute of Forest Ecosystems, Eberswalde, Germany &
@@ -244,15 +244,15 @@ sorcering(
                         }}
                         
                         //somewhere no C or no C input? (occurs if you start from 0 like with C-Tool_org, else rare case)
-                        if (any(cpools_sub.row(ss)==0) | any(cpools_sub.row(ss-1)+Cin_arma.row(ts-1)==0)) 
+                        if (any(cpools_sub.row(ss)==0) || any(cpools_sub.row(ss-1)+Cin_arma.row(ts-1)==0)) 
                         {
                             // no C, or no C before and no Cinput
                             for(int i=0; i<nr_pools;i++) 
-                            {if ((cpools_sub(ss,i)==0) | (cpools_sub(ss,i) + Cin_here(i) ==0 ) ) npools_sub(ss,i)=0;}
+                            {if ((cpools_sub(ss,i)==0) || (cpools_sub(ss,i) + Cin_here(i) ==0 ) ) npools_sub(ss,i)=0;}
 
                             // there is C in pool (and so should N), but there have not been N or N input before (filled by transfer)
                             for(int i=0; i<nr_pools;i++) 
-                            {if ((cpools_sub(ss,i)>0) & (npools_sub(ss-1,i)==0) & (Nin_here(i) ==0) )  
+                            {if ((cpools_sub(ss,i)>0) && (npools_sub(ss-1,i)==0) && (Nin_here(i) ==0) )  
                                 npools_sub(ss,i) = cpools_sub(ss,i)/ (cpools_sub(ss,0)/npools_sub(ss,0)) ;} //assume that first pools have C and N ... should work if first pool is always the first pool that gets input... worked so far
                         }
                         
