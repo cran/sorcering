@@ -1,9 +1,9 @@
-0952c69ded68b2c103d2b009b778ac27 *DESCRIPTION
+d792f2370dc888d3ee2a8e3205d8d124 *DESCRIPTION
 6cf0e00aff577ada98df63cdb312d0f9 *NAMESPACE
 9ea8247c4f929364e6920474e5711f4b *R/RcppExports.R
 d973aa10862ba5a1479d7fc241be376c *R/fget_A_RothC.R
-c16194949edc181e13f5ee90dadd23b6 *build/partial.rdb
-3e0a2488c3db7c57b7d5d31e0f4dca6c *build/sorcering.pdf
+c1fa3d4c7a6dfd9d1fa9fe5e0dab0e91 *build/partial.rdb
+1d40696c72e0babd7b82596cb79dd9a3 *build/sorcering.pdf
 342332de431b186f9a65adbd1d1709ac *build/vignette.rds
 391bf25cf0110b2dbf669d08044bc93b *data/C0_ex.RData
 ef8098a8d51d3aa20808f2bb6adec598 *data/Cin_ex.RData
@@ -12,7 +12,7 @@ ef8098a8d51d3aa20808f2bb6adec598 *data/Cin_ex.RData
 9fcbfda27c3a31a3e05eea8e3f7d951e *data/xi_ex.RData
 34f2588a438a5b9cb080dacc47545f67 *inst/REFERENCES.bib
 432337e65314f4142d25d2cf79460145 *inst/doc/sorcering.Rnw
-10c0ed9011e9427598d6b7f84abcf2a4 *inst/doc/sorcering.pdf
+cc6c15f133e37637f16ca7f32d57d03f *inst/doc/sorcering.pdf
 6dc8d955b5eb250e8087c3527cace371 *man/C0_ex.Rd
 cb863ca18c119f575c0d15b0115fd820 *man/Cin_ex.Rd
 45a090361da4b9a55a4fe7a47ca9b63f *man/N0_ex.Rd
@@ -22,6 +22,6 @@ cb863ca18c119f575c0d15b0115fd820 *man/Cin_ex.Rd
 19004e7f192d929a2d5ed108718b3995 *man/xi_ex.Rd
 2a6f9e9e044a78154d3cfda5936d6f48 *src/Makevars
 f14c5b3d802c35f6894b68d7593a5cdf *src/RcppExports.cpp
-9e94affaa4df5e09f93fa1690eeb057f *src/sorcering.cpp
+e39091da2f59c90a1f0f3c467cec9342 *src/sorcering.cpp
 432337e65314f4142d25d2cf79460145 *vignettes/sorcering.Rnw
 459e0fdffae41c07edd1865228de8239 *vignettes/sorcering_vignette.pdf
