@@ -1,6 +1,6 @@
 \documentclass{article}
 \usepackage{pdfpages}
-%\VignetteIndexEntry{Sorcering function documentation}
+%\VignetteIndexEntry{Extended sorcering function documentation}
 %\VignettePackage{sorcering}
 
 \begin{document}

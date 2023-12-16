@@ -6,29 +6,71 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // sorcering
-List sorcering(const Nullable<NumericMatrix&> A, const int t_sim, const String& tsteps, const Nullable<NumericVector&> C0, const Nullable<NumericVector&> N0, const Nullable<NumericMatrix&> Cin, const Nullable<NumericMatrix&> Nin, const Nullable<NumericMatrix&> xi, const bool calcN, const bool calcNbalance);
-RcppExport SEXP _sorcering_sorcering(SEXP ASEXP, SEXP t_simSEXP, SEXP tstepsSEXP, SEXP C0SEXP, SEXP N0SEXP, SEXP CinSEXP, SEXP NinSEXP, SEXP xiSEXP, SEXP calcNSEXP, SEXP calcNbalanceSEXP) {
+List sorcering(const Nullable<NumericMatrix&> A, const String& tsteps, const int t_sim, const Nullable<NumericVector&> C0, const Nullable<NumericVector&> N0, const Nullable<SEXP*> Cin, const Nullable<SEXP*> Nin, const Nullable<List&> Cin_wood, const Nullable<List&> Nin_wood, const Nullable<NumericVector&> wood_diam, const Nullable<SEXP*> xi, const Nullable<NumericMatrix&> env_in, const Nullable<NumericVector&> site, const Nullable<SEXP*> theta, const Nullable<NumericVector&> theta_unc, const int theta_n_unc, const Nullable<NumericMatrix&> meas_data, const List t_sim_sl, const Nullable<List&> A_sl, const Nullable<List&> C0_sl, const Nullable<List&> N0_sl, const Nullable<List&> Cin_sl, const Nullable<List&> Nin_sl, const Nullable<List&> Cin_wood_sl, const Nullable<List&> Nin_wood_sl, const Nullable<List&> wood_diam_sl, const Nullable<List&> xi_sl, const Nullable<List&> env_in_sl, const Nullable<List&> site_sl, const Nullable<List&> sitelist, const Nullable<List&> meas_data_sl, const bool calcN, const bool calcNbalance, const bool calcN0, const bool calcC0, const bool calcCN_fast_init, const bool CTool_input_raw, const bool RothC_Cin4C0, const Nullable<NumericVector&> C0_fracts, const bool multisite, const Nullable<IntegerVector&> pooltypes, const int CN_fast_init, const int CN_bio, const Nullable<List&> CN_fast_init_sl, const Nullable<List&> CN_bio_sl, const bool init_info, const String& model);
+RcppExport SEXP _sorcering_sorcering(SEXP ASEXP, SEXP tstepsSEXP, SEXP t_simSEXP, SEXP C0SEXP, SEXP N0SEXP, SEXP CinSEXP, SEXP NinSEXP, SEXP Cin_woodSEXP, SEXP Nin_woodSEXP, SEXP wood_diamSEXP, SEXP xiSEXP, SEXP env_inSEXP, SEXP siteSEXP, SEXP thetaSEXP, SEXP theta_uncSEXP, SEXP theta_n_uncSEXP, SEXP meas_dataSEXP, SEXP t_sim_slSEXP, SEXP A_slSEXP, SEXP C0_slSEXP, SEXP N0_slSEXP, SEXP Cin_slSEXP, SEXP Nin_slSEXP, SEXP Cin_wood_slSEXP, SEXP Nin_wood_slSEXP, SEXP wood_diam_slSEXP, SEXP xi_slSEXP, SEXP env_in_slSEXP, SEXP site_slSEXP, SEXP sitelistSEXP, SEXP meas_data_slSEXP, SEXP calcNSEXP, SEXP calcNbalanceSEXP, SEXP calcN0SEXP, SEXP calcC0SEXP, SEXP calcCN_fast_initSEXP, SEXP CTool_input_rawSEXP, SEXP RothC_Cin4C0SEXP, SEXP C0_fractsSEXP, SEXP multisiteSEXP, SEXP pooltypesSEXP, SEXP CN_fast_initSEXP, SEXP CN_bioSEXP, SEXP CN_fast_init_slSEXP, SEXP CN_bio_slSEXP, SEXP init_infoSEXP, SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Nullable<NumericMatrix&> >::type A(ASEXP);
-    Rcpp::traits::input_parameter< const int >::type t_sim(t_simSEXP);
     Rcpp::traits::input_parameter< const String& >::type tsteps(tstepsSEXP);
+    Rcpp::traits::input_parameter< const int >::type t_sim(t_simSEXP);
     Rcpp::traits::input_parameter< const Nullable<NumericVector&> >::type C0(C0SEXP);
     Rcpp::traits::input_parameter< const Nullable<NumericVector&> >::type N0(N0SEXP);
-    Rcpp::traits::input_parameter< const Nullable<NumericMatrix&> >::type Cin(CinSEXP);
-    Rcpp::traits::input_parameter< const Nullable<NumericMatrix&> >::type Nin(NinSEXP);
-    Rcpp::traits::input_parameter< const Nullable<NumericMatrix&> >::type xi(xiSEXP);
+    Rcpp::traits::input_parameter< const Nullable<SEXP*> >::type Cin(CinSEXP);
+    Rcpp::traits::input_parameter< const Nullable<SEXP*> >::type Nin(NinSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type Cin_wood(Cin_woodSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type Nin_wood(Nin_woodSEXP);
+    Rcpp::traits::input_parameter< const Nullable<NumericVector&> >::type wood_diam(wood_diamSEXP);
+    Rcpp::traits::input_parameter< const Nullable<SEXP*> >::type xi(xiSEXP);
+    Rcpp::traits::input_parameter< const Nullable<NumericMatrix&> >::type env_in(env_inSEXP);
+    Rcpp::traits::input_parameter< const Nullable<NumericVector&> >::type site(siteSEXP);
+    Rcpp::traits::input_parameter< const Nullable<SEXP*> >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const Nullable<NumericVector&> >::type theta_unc(theta_uncSEXP);
+    Rcpp::traits::input_parameter< const int >::type theta_n_unc(theta_n_uncSEXP);
+    Rcpp::traits::input_parameter< const Nullable<NumericMatrix&> >::type meas_data(meas_dataSEXP);
+    Rcpp::traits::input_parameter< const List >::type t_sim_sl(t_sim_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type A_sl(A_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type C0_sl(C0_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type N0_sl(N0_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type Cin_sl(Cin_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type Nin_sl(Nin_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type Cin_wood_sl(Cin_wood_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type Nin_wood_sl(Nin_wood_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type wood_diam_sl(wood_diam_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type xi_sl(xi_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type env_in_sl(env_in_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type site_sl(site_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type sitelist(sitelistSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type meas_data_sl(meas_data_slSEXP);
     Rcpp::traits::input_parameter< const bool >::type calcN(calcNSEXP);
     Rcpp::traits::input_parameter< const bool >::type calcNbalance(calcNbalanceSEXP);
-    rcpp_result_gen = Rcpp::wrap(sorcering(A, t_sim, tsteps, C0, N0, Cin, Nin, xi, calcN, calcNbalance));
+    Rcpp::traits::input_parameter< const bool >::type calcN0(calcN0SEXP);
+    Rcpp::traits::input_parameter< const bool >::type calcC0(calcC0SEXP);
+    Rcpp::traits::input_parameter< const bool >::type calcCN_fast_init(calcCN_fast_initSEXP);
+    Rcpp::traits::input_parameter< const bool >::type CTool_input_raw(CTool_input_rawSEXP);
+    Rcpp::traits::input_parameter< const bool >::type RothC_Cin4C0(RothC_Cin4C0SEXP);
+    Rcpp::traits::input_parameter< const Nullable<NumericVector&> >::type C0_fracts(C0_fractsSEXP);
+    Rcpp::traits::input_parameter< const bool >::type multisite(multisiteSEXP);
+    Rcpp::traits::input_parameter< const Nullable<IntegerVector&> >::type pooltypes(pooltypesSEXP);
+    Rcpp::traits::input_parameter< const int >::type CN_fast_init(CN_fast_initSEXP);
+    Rcpp::traits::input_parameter< const int >::type CN_bio(CN_bioSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type CN_fast_init_sl(CN_fast_init_slSEXP);
+    Rcpp::traits::input_parameter< const Nullable<List&> >::type CN_bio_sl(CN_bio_slSEXP);
+    Rcpp::traits::input_parameter< const bool >::type init_info(init_infoSEXP);
+    Rcpp::traits::input_parameter< const String& >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(sorcering(A, tsteps, t_sim, C0, N0, Cin, Nin, Cin_wood, Nin_wood, wood_diam, xi, env_in, site, theta, theta_unc, theta_n_unc, meas_data, t_sim_sl, A_sl, C0_sl, N0_sl, Cin_sl, Nin_sl, Cin_wood_sl, Nin_wood_sl, wood_diam_sl, xi_sl, env_in_sl, site_sl, sitelist, meas_data_sl, calcN, calcNbalance, calcN0, calcC0, calcCN_fast_init, CTool_input_raw, RothC_Cin4C0, C0_fracts, multisite, pooltypes, CN_fast_init, CN_bio, CN_fast_init_sl, CN_bio_sl, init_info, model));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_sorcering_sorcering", (DL_FUNC) &_sorcering_sorcering, 10},
+    {"_sorcering_sorcering", (DL_FUNC) &_sorcering_sorcering, 47},
     {NULL, NULL, 0}
 };
 
