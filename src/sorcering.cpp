@@ -420,7 +420,7 @@ sorcering(
              ) 
 {    
 
-    // sorcering V.1.0, December 17, 2023
+    // sorcering V.1.0.0.1, December 17, 2023
     // SORCERING: Soil ORganic Carbon & CN Ratio drIven Nitrogen modellinG framework
     // by 
     // Dr. Marc Scherstjanoi, Thünen Institute of Forest Ecosystems, Eberswalde, Germany &

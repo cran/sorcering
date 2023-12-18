@@ -1,10 +1,10 @@
-c6551ac5f041068cda337db48dd50f44 *DESCRIPTION
+efd83120f4daf8de2f5f0ce14a53b4bd *DESCRIPTION
 6cf0e00aff577ada98df63cdb312d0f9 *NAMESPACE
 ff41ee25ee0babcab7791ff94272e882 *R/RcppExports.R
 d973aa10862ba5a1479d7fc241be376c *R/fget_A_RothC.R
-46411326eaf1004b80be92b7b1017c15 *build/partial.rdb
-5f5428cb5e40f06fa8303abddef28ab1 *build/sorcering.pdf
-79a587328e1efa43fc2e4b45de7f228c *build/stage23.rdb
+18de99c6516ea00eb2790a75a465f565 *build/partial.rdb
+84f12c382558e572ed5c3ce96d0286cf *build/sorcering.pdf
+6fc5444aa532fa581aaf67ed4297bff9 *build/stage23.rdb
 3385f6a68a1b39cf4df2b247268f19a0 *build/vignette.rds
 2983663c26faaa3ec26ccb55e0399049 *data/RothC_C0_ex.RData
 994b2dd8812a74eb4f717d87f4f5a424 *data/RothC_Cin_ex.RData
@@ -22,7 +22,7 @@ fd5131f8b0d8937f02c1cd9c12990f9d *data/Yasso_Cin_ex_wood_u_sl.RData
 42819c0d35a91dc5dc555d1eca4cd684 *data/meas_data_ex.RData
 a917fe123658dfd6c35b6367eba4492c *inst/REFERENCES.bib
 2a3783c4d608612a5ce7e020e0bac622 *inst/doc/sorcering.Rnw
-3b0e611425576219820645e8a803a450 *inst/doc/sorcering.pdf
+170305656e280b0b9b8ef1c2e8444f5a *inst/doc/sorcering.pdf
 b85c8ec1d1b92a9b25f407fe83d1dba5 *man/RothC_C0_ex.Rd
 80198781fad0745cba3b86a7d6f7b5c6 *man/RothC_Cin_ex.Rd
 7ffb32fd947f185a3f5076f59961fca0 *man/RothC_Cin_ex_sl.Rd
@@ -42,6 +42,6 @@ ea02aa511e530512c2f09d4e5f5800e8 *man/sorcering.Rd
 2a6f9e9e044a78154d3cfda5936d6f48 *src/Makevars
 8e93a10bcdf75eb35ba9e917646aaf10 *src/Makevars.win
 c79c9d3df5fdc0eb06402b474bddfa0f *src/RcppExports.cpp
-38e684c645d495d0236104f9a41b12f6 *src/sorcering.cpp
+3197d28f39b384dc6ee5d5c55ff1b275 *src/sorcering.cpp
 2a3783c4d608612a5ce7e020e0bac622 *vignettes/sorcering.Rnw
-88c632045941dd88c6e2938e96b85c04 *vignettes/sorcering_vignette.pdf
+1f246a8a5dfa7c789baa09a9e1741579 *vignettes/sorcering_vignette.pdf
