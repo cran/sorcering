@@ -204,7 +204,7 @@ void checkwooddiamlist(int size, int wood_size, int uncert, int el_lists, bool u
         sw += w1;
         if (c1n2==1) sw +=("  does not match number of different wood classes of C input: ");
         if (c1n2==2) sw +=("  does not match number of different wood classes of N input: ");
-        sw += w2;          
+        sw += w2;   
         if (unc) 
         {
             sw +=(". Uncert layer: ");
@@ -420,7 +420,7 @@ sorcering(
              ) 
 {    
 
-    // sorcering V.1.0.0.1, December 17, 2023
+    // sorcering V.1.0.1, April 12, 2024
     // SORCERING: Soil ORganic Carbon & CN Ratio drIven Nitrogen modellinG framework
     // by 
     // Dr. Marc Scherstjanoi, Thünen Institute of Forest Ecosystems, Eberswalde, Germany &
@@ -1435,7 +1435,7 @@ sorcering(
                                                                     if (site_arma(3)==0 && calcN0==false && site_arma(2)==1 && C0.isNull() && N0.isNull()) s7 +=(" When going for Springob method, if CN is not defined it must be calculated! Set calcN0 to TRUE or mark black sand status with '0' in site input file to skip the Springob method or define C0 and N0.");
                                                                 } 
                                                                 if (all(vectorise(env_in_arma)==1.0)) s7 +=(" Need climate and crop information per site when using pre-defined RothC model definitions. Please define env_in (T, p, ETP and crop info)! "); 
-                                                                if (!all(env_in_arma.col(3)==1.0 || env_in_arma.col(3)==0.0))  s7 +=(" Crop information must be either 0 or 1! "); 
+                                                                if (!all(env_in_arma.col(3)==1.0 || env_in_arma.col(3)==0.0 || env_in_arma.col(3)==2.0))  s7 +=(" Crop information must be either 0 or 1 or 2! "); 
                                                                 if (any(env_in_arma.col(2)<0))  s7 +=(" Evapotranspiration must not be negative! "); 
                                                         }
                                                         if (model.get_cstring()==ctool || model.get_cstring()==ctool_o ) 
@@ -1565,6 +1565,7 @@ sorcering(
                                                         arma::colvec RateW(tseqlength_unsi); 
                                                         arma::colvec RateWb(tseqlength_unsi); 
                                                         arma::colvec MaxTSMD(tseqlength_unsi); 
+                                                        arma::colvec MaxTSMDb(tseqlength_unsi); //1.0.1
                                                         arma::colvec Mvec(tseqlength_unsi); 
                                                         arma::colvec RateC(tseqlength_unsi); 
                                                             
@@ -1574,12 +1575,23 @@ sorcering(
                                                             else RateT(iw) = 0;
                                                         }
                                                             
-                                                        MaxTSMD.fill (-(20 + 1.3 * clay - 0.01 * pow(clay,2)) * (site_arma(0)/23)/1.8);            
-                                                        arma::uvec critids = find(Cropvec==1); // Find indices with crop
-                                                        for(const unsigned int& critid: critids) MaxTSMD(critid)=-(20 + 1.3 * clay - 0.01 * pow(clay,2)) * (site_arma(0)/23);
+                                                        MaxTSMD.fill (-(20 + 1.3 * clay - 0.01 * pow(clay,2)) * (site_arma(0)/23)/1.8);   
+                                                                                      
+                                                        //1.0.1
+                                                        MaxTSMDb=MaxTSMD;  
+                                                        arma::uvec critids2 = find(Cropvec==2); // Find indices without crop, that are to be treated as with crop for calculation of RateWb - microorganisms in soil do not know vegetation cover
+                                                        for(const unsigned int& critid2: critids2) MaxTSMDb(critid2)=-(20 + 1.3 * clay - 0.01 * pow(clay,2)) * (site_arma(0)/23);
+                                                        
+                                                        arma::uvec critids= find(Cropvec==1); // Find indices with crop
+                                                        for(const unsigned int& critid: critids) 
+                                                        {
+                                                            MaxTSMD(critid)=-(20 + 1.3 * clay - 0.01 * pow(clay,2)) * (site_arma(0)/23);
+                                                            MaxTSMDb(critid)=-(20 + 1.3 * clay - 0.01 * pow(clay,2)) * (site_arma(0)/23); //1.0.1
+                                                        }
                                                         Mvec = pvec - ETPvec;       
                                                         if (Mvec(0)>0) RateW(0)=0;
                                                         else RateW(0)=Mvec(0);
+                                                        if (RateW(0)<=MaxTSMD(0)) RateW(0)=MaxTSMD(0); //ab 1.0.1
                                                         for(unsigned int iw=1; iw<tseqlength_unsi; iw++) 
                                                         {
                                                             if (RateW(iw-1)+Mvec(iw)<0) RateW(iw)=RateW(iw-1)+Mvec(iw);
@@ -1588,13 +1600,14 @@ sorcering(
                                                         }
                                                         for(unsigned int iw=0; iw<tseqlength_unsi; iw++) 
                                                         {
-                                                            if (RateW(iw)>=0.444*MaxTSMD(iw)) RateWb(iw)=theta_arma(5);
-                                                            else RateWb(iw)=(theta_arma(6) + (theta_arma(5)-theta_arma(6)) * ((MaxTSMD(iw)-RateW(iw))/(MaxTSMD(iw) - 0.444 * MaxTSMD(iw))));
+                                                            if (RateW(iw)>=0.444*MaxTSMDb(iw)) RateWb(iw)=theta_arma(5);
+                                                            else RateWb(iw)=(theta_arma(6) + (theta_arma(5)-theta_arma(6)) * ((MaxTSMDb(iw)-RateW(iw))/(MaxTSMDb(iw) - 0.444 * MaxTSMDb(iw))));
                                                         }
                                                         RateC.fill(1);
                                                         for(const unsigned int& critid: critids) RateC(critid)=0.6; //soil coverage factor              
                                                         xi_arma.each_col() = RateT % RateWb % RateC;      
                                                     }   
+ 
                                                     if (model.get_cstring()==ctool || model.get_cstring()==ctool_o)
                                                     {   
                                                         double clay = site_arma(0); //if clay is known
