@@ -28,7 +28,6 @@ The fourth-order Runge-Kutta algorithm is used to numerically solve the system o
 \usage{
 sorcering(    A = NULL,
               tsteps = "monthly",
-              t_sim = 2,
               C0 = NULL,
               N0 = NULL,
               Cin = NULL,
@@ -43,7 +42,6 @@ sorcering(    A = NULL,
               theta_unc = NULL,
               theta_n_unc = 1,
               meas_data = NULL,
-              t_sim_sl = 2,
               A_sl = NULL,
               C0_sl = NULL,
               N0_sl = NULL,
@@ -69,34 +67,37 @@ sorcering(    A = NULL,
               pooltypes = NULL,
               CN_fast_init = 40,
               CN_bio = 9,
+              CN_spin = NULL,
               CN_fast_init_sl = NULL,
               CN_bio_sl = NULL,
+              CN_spin_sl = NULL,
               init_info = FALSE,
-              model = "")
+              model = "",
+              spinup = FALSE,
+              t_spin = 2,
+              t_spin_sl = 2)
 }
 \arguments{
   \item{A}{ square matrix. Transfer matrix typical for SOC modelling. Defines number of pools, decomposition and transfer rates. n\mjeqn{\times}{x}n elements with n = number of pools. Diagonal values are decomposition rates [\ifelse{html}{\out{yr<sup>-1</sup>}}{\eqn{\mathrm{yr^{-1}}}}]. Off-diagonals represent the transfer between pools . Only used when \code{model is NULL}}
   \item{tsteps}{character string indicating the type of simulation time steps. Valid options are \code{"annually"}, \code{"monthly"} (recommended) or \code{"weekly"}. Ensures that the rate modifying factors (passed through \code{xi}
  or used by a predefined model) are adjusted by dividing them by 1, 12, and 52 respectively. Also ensures that environment-specific information (passed through \code{env_in}) takes into account the time reference of the modelling.}
-  \item{t_sim}{integer number of simulation time steps. Must correspond to the number of rows of \code{Cin}, \code{Nin} and \code{xi}.}
   \item{C0}{either vector with a length equal to the number of pools or scalar. If vector, initial soil organic carbon per pool [\ifelse{html}{\out{tC ha<sup>-1</sup>}}{\eqn{\mathrm{tC \, ha^{-1}}}}]. 
   If scalar, initial total soil organic carbon [\ifelse{html}{\out{tC ha<sup>-1</sup>}}{\eqn{\mathrm{tC \, ha^{-1}}}}]. In the latter case, either \code{model} must be selected or \code{C0_fracts} must be passed. 
   If \code{NULL}, filled with zeros.}
   \item{N0}{vector with a length equal to the number of pools. Contains initial soil organic nitrogen per pool [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}]. If \code{NULL}, filled with zeros. Only used when \code{calcN = TRUE} and \code{calcN0 = FALSE}.}
-  \item{Cin}{either matrix with a number of columns equal to the number of pools and a number of rows corresponding to \code{t_sim}, or list containing such matrices. If it is a list, each element of the list is expected to represent a stochastic repetition that covers input uncertainties. Then, the list must contain matrices of equal dimensions. Each matrix (or the one if modelling without uncertainties) must contain information about carbon input per pool and time step [\ifelse{html}{\out{tC ha<sup>-1</sup>}}{\eqn{\mathrm{tC \, ha^{-1}}}}]. When \code{CTool_input_raw = TRUE}, and \code{model = "C-Tool"} or \code{model = "C-Tool-org"}, the matrix structure can have two columns (as described for \code{CTool_input_raw}). If \code{NULL}, filled with zeros.}
-  \item{Nin}{either matrix with a number of columns equal to the number of pools and a number of rows corresponding to \code{t_sim}, or list containing such matrices. If it is a list, each element of the list is expected to represent a stochastic repetition that covers input uncertainties. Then, the list must contain matrices of equal dimensions. Each matrix (or the one if modelling without uncertainties) must contain information about nitrogen input per pool and time step [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}]. When \code{CTool_input_raw = TRUE}, and \code{model = "C-Tool"} or \code{model = "C-Tool-org"} the matrix structure can have 2 columns (as described for \code{CTool_input_raw}). If \code{NULL}, filled with zeros. Must contain entries \code{> 0} where entries of \code{Cin} are \code{> 0}. Only used when \code{calcN = TRUE}.}
+  \item{Cin}{either matrix with a number of columns equal to the number of pools and a number of rows corresponding to simulation time steps (if \code{spinup = FALSE}) or spin-up reference period (if \code{spinup = TRUE}), or list containing such matrices. If it is a list, each element of the list is expected to represent a stochastic repetition that covers input uncertainties. Then, the list must contain matrices of equal dimensions. Each matrix (or the one if modelling without uncertainties) must contain information about carbon input per pool and time step [\ifelse{html}{\out{tC ha<sup>-1</sup>}}{\eqn{\mathrm{tC \, ha^{-1}}}}]. When \code{CTool_input_raw = TRUE}, and \code{model = "C-Tool"} or \code{model = "C-Tool-org"}, the matrix structure can have two columns (as described for \code{CTool_input_raw}). If \code{NULL}, filled with zeros.}
+  \item{Nin}{either matrix with a number of columns equal to the number of pools and a number of rows corresponding to simulation time steps (if \code{spinup = FALSE}) or spin-up reference period (if \code{spinup = TRUE}), in each case in accordance with number of rows of \code{Cin}, or list containing such matrices. If it is a list, each element of the list is expected to represent a stochastic repetition that covers input uncertainties. Then, the list must contain matrices of equal dimensions. Each matrix (or the one if modelling without uncertainties) must contain information about nitrogen input per pool and time step [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}]. When \code{CTool_input_raw = TRUE}, and \code{model = "C-Tool"} or \code{model = "C-Tool-org"} the matrix structure can have 2 columns (as described for \code{CTool_input_raw}). If \code{NULL}, filled with zeros. Must contain entries \code{> 0} where entries of \code{Cin} are \code{> 0}. Only used when \code{calcN = TRUE}.}
   \item{Cin_wood}{list of lengths of different wood diameter classes. Each list element must be in \code{Cin} format and represent a specific wood diameter. Furthermore, the list elements themselves can be lists and contain stochastic repetitions, as explained for \code{Cin}. The mean diameter per class is defined in \code{wood_diam}. Only used when \code{model = "Yasso15"} or \code{model = "Yasso20"}.}
   \item{Nin_wood}{list of lengths of different wood diameter classes. Each list element must be in \code{Nin} format and represent a specific wood diameter. Furthermore, the list elements themselves can be lists and contain stochastic repetitions, as explained for \code{Nin}. The mean diameter per class is defined in \code{wood_diam}. Must contain entries \code{> 0} where entries of \code{Cin_wood} are \code{> 0}. Only used when \code{calcN = TRUE}. Only used when \code{model = "Yasso15"} or \code{model = "Yasso20"}. }
   \item{wood_diam}{ vector with wood diameter [cm]. The first element corresponds to the first list element of \code{Cin_wood} and \code{Nin_wood}. If \code{NULL}, filled with zeros. Only used when \code{Cin_wood} is specified and when either \code{model = "Yasso15"} or \code{model = "Yasso20"}. Must contain entries \code{>= 0}.}
-  \item{xi}{either matrix with a number of columns equal to the number of pools and a number of rows corresponding to \code{t_sim} or list containing such matrices. If it is a list, each element of the list is expected to represent a stochastic repetition that covers input uncertainties. Then, the list must contain matrices of equal dimensions. Each matrix (or the one if modelling without uncertainties) must contain information about time series of rate modifying factors for each model pool, built on the basis of annual decomposition rates. If \code{NULL}, filled with ones. Only used when \code{model is NULL}.}
-  \item{env_in}{ matrix with a model-specific number of columns and a number of rows corresponding to \code{t_sim}. Contains environment-specific information to calculate rate modifying factors (instead of passing them with \code{xi}) and initial distributions (only RothC). When \code{model = "RothC"}, it must have four columns: atmospheric temperature (T) [degrees C], precipitation (p) [mm], evapotranspiration [mm] and a vector of zeros, ones (both originally RothC) or twos (not originally RothC) describing the soil cover, where ones indicate time steps when the soil is vegetated, zeros when it is bare and twos when it is bare, but this only influences the accumulated but not the maximum topsoil moisture deficit. The latter will then be calculated as if there was soil cover. The idea behind this is that the water content should be decisive for the microorganisms as a habitat and transport medium, regardless of whether a plant is growing or not. When \code{model = "Yasso07"} or \code{model = "Yasso15"} or \code{model = "Yasso20"}, it must have two columns: T [degrees C] and p [mm]. When \code{model = "C-Tool"} or \code{model = "C-Tool-org"}, it has one column: T [degrees C]. If \code{NULL}, filled with ones. Only used when \code{model is not NULL}.}
+  \item{xi}{either matrix with a number of columns equal to the number of pools and a number of rows corresponding to simulation time steps (if \code{spinup = FALSE}) or spin-up reference period (if \code{spinup = TRUE}), in each case in accordance with number of rows of \code{Cin}, or list containing such matrices. If it is a list, each element of the list is expected to represent a stochastic repetition that covers input uncertainties. Then, the list must contain matrices of equal dimensions. Each matrix (or the one if modelling without uncertainties) must contain information about time series of rate modifying factors for each model pool, built on the basis of annual decomposition rates. If \code{NULL}, filled with ones. Only used when \code{model is NULL}.}
+  \item{env_in}{ matrix with a model-specific number of columns and a number of rows corresponding to simulation time steps (if \code{spinup = FALSE}) or spin-up reference period (if \code{spinup = TRUE}), in each case in accordance with number of rows of \code{Cin}. Contains environment-specific information to calculate rate modifying factors (instead of passing them with \code{xi}) and initial distributions (only RothC). When \code{model = "RothC"}, it must have four columns: atmospheric temperature (T) [degrees C], precipitation (p) [mm], evapotranspiration [mm] and a vector of zeros, ones (both originally RothC) or twos (not originally RothC) describing the soil cover, where ones indicate time steps when the soil is vegetated, zeros when it is bare and twos when it is bare, but this only influences the accumulated but not the maximum topsoil moisture deficit. The latter will then be calculated as if there was soil cover. The idea behind this is that the water content should be decisive for the microorganisms as a habitat and transport medium, regardless of whether a plant is growing or not. When \code{model = "Yasso07"} or \code{model = "Yasso15"} or \code{model = "Yasso20"}, it must have two columns: T [degrees C] and p [mm]. When \code{model = "C-Tool"} or \code{model = "C-Tool-org"}, it has one column: T [degrees C]. If \code{NULL}, filled with ones. Only used when \code{model is not NULL}.}
   \item{site}{vector of model-specific length. Contains site-specific information to calculate rate modifying factors (instead of passing them with \code{xi}) and initial distributions (only RothC). and initial carbon and nitrogen distributions. When \code{model = "RothC"}, it must be of length four: sample depth [mm], clay content [\ifelse{html}{\out{\%}}{\%}], black sand status (0 or 1, 0 if unknown or if black sand method is not desired) and CN ratio (0 if unknown, but then either \code{C0} and \code{N0} must be passed or \code{calcC0 = TRUE} and \code{calcN0 = TRUE}, information on CN ratio given in \code{site} always takes precedence over internally calculated CN ratios). When \code{model = "C-Tool"} or \code{model = "C-Tool-org"}, it must be of length one: clay content [\ifelse{html}{\out{\%}}{\%}]. Only used when \code{model = "RothC"} or \code{model = "C-Tool"} or \code{model = "C-Tool-org"}.}
   \item{theta}{
   either vector with model parameters for predefined models or matrix with rows of such parameters. If it is a matrix, each row is expected to represent a stochastic repetition that covers input uncertainties. If uncertainties are defined by another argument, e.g. \code{Cin} or \code{Nin}, these determine the number of stochastic repetitions and not \code{theta}. Then, if \code{theta} is a matrix, a parameter vector is randomly drawn for each uncertainty loop. Each vector (or row of matrix) must be of length 7 when \code{model = "RothC"}, of length 10 when \code{model = "C-Tool"} or \code{model = "C-Tool-org"}, of length 21 when \code{model = "Yasso07"} and of length 30 when \code{model = "Yasso15"} or \code{model = "Yasso20"}. If \code{NULL}, model-specific standard parameters are used instead. Only used when \code{model is not NULL}. See model parameters table in section 'Details' for standard parameters used. }  
   \item{theta_unc}{either number or vector of percentage values. If it is a vector, the same model-specific lengths as described for \code{theta} must be used. When used, model parameters modified by taking from the normal distribution around given values (either from \code{theta} or predefined values) with a standard deviation of \code{theta_unc}. This will be repeated as many times as defined in \code{theta_n_unc} or as defined by uncertainty dimensions of a carbon or nitrogen input argument (e.g. \code{Cin}) and lead to unique model results and output list elements.  Only used when \code{model is not NULL} and \code{theta} is not a matrix.}
   \item{theta_n_unc}{number of stochastic repetitions when model parameters for predefined models should be determined from a random distribution. Only used when the number of stochastic repetitions is not defined by another argument (e.g. \code{Cin} ). Only used when \code{model is not NULL}, \code{theta_unc is not NULL} and \code{theta} is not a matrix.}  
   \item{meas_data}{ matrix with a number of rows equal to the number of measurement points. The first column defines the time of measurement, the metric of which is based on simulation time steps. The second row must contain values of measured soil organic carbon stock. The third row must contain values of measured soil organic nitrogen and is only used when \code{calcN0 = TRUE}. Only used when \code{calcC0 = TRUE}.}
-  \item{t_sim_sl}{list with a length of number of sites to simulate. Each list element represents a site and must be in \code{t_sim} format. Only used when \code{multisite = TRUE}.}
   \item{A_sl}{list with a length of number of sites to simulate. Each list element represents a site and must be in \code{A} format. Only used when \code{multisite = TRUE} and \code{model is NULL}. When \code{multisite = TRUE}, \code{A} can be passed instead of \code{A_sl} to have the same argument for all sites. }
   \item{C0_sl}{list with a length of number of sites to simulate. Each list element represents a site and must be in \code{C0} format. Only used when \code{multisite = TRUE}.}
   \item{N0_sl}{list with a length of number of sites to simulate. Each list element represents a site and must be in \code{N0} format. Only used when \code{multisite = TRUE}, \code{calcN = TRUE} and \code{calcN0 = FALSE}.}
@@ -128,14 +129,21 @@ sorcering(    A = NULL,
   \item{RothC_Cin4C0}{ logical defining whether the SOC input should be used for the calculation of initial SOC. If \code{false} the standard RothC ratio for agricultural soils of DPM to RPM of 0.59 to 0.41 is used.
  Only used when \code{model = "RothC"} and \code{calcC0 = TRUE}.} 
   \item{C0_fracts}{numerical vector of a length equal to the number of pools. Contains initial fractions of SOC in pools, the sum of which must be 1. Only used when \code{calcC0 = TRUE}.}
-  \item{multisite}{ logical indicating whether multiple sites should be calculated with one program call. Then, \code{t_sim}, \code{C0}, \code{N0}, \code{Cin}, \code{Nin}, \code{Cin_wood}, \code{Nin_wood}, \code{wood_diam}, \code{env_in}, \code{site_in}, \code{xi} and \code{meas_data} must be of list type and replaced with \code{t_sim_sl}, \code{C0_sl}, \code{N0_sl}, \code{Cin_sl}, \code{Nin_sl}, \code{Cin_wood_sl}, \code{Nin_wood_sl}, \code{wood_diam_sl}, \code{env_in_sl}, \code{site_in_sl}, \code{xi_sl} and \code{meas_data_sl}, respectively. \code{A}, \code{CN_bio} and \code{CN_fast_init} can be given as single variables or in list form of \code{A_sl}, \code{CN_bio_sl} and \code{CN_fast_init_sl}, respectively.}
+  \item{multisite}{ logical indicating whether multiple sites should be calculated with one program call. Then, \code{t_spin}, \code{C0}, \code{N0}, \code{Cin}, \code{Nin}, \code{Cin_wood}, \code{Nin_wood}, \code{wood_diam}, \code{env_in}, \code{site_in}, \code{xi} and \code{meas_data} must be of list type and replaced with \code{t_spin_sl}, \code{C0_sl}, \code{N0_sl}, \code{Cin_sl}, \code{Nin_sl}, \code{Cin_wood_sl}, \code{Nin_wood_sl}, \code{wood_diam_sl}, \code{env_in_sl}, \code{site_in_sl}, \code{xi_sl} and \code{meas_data_sl}, respectively. \code{A}, \code{CN_bio} and \code{CN_fast_init} can be given as single variables or in list form of \code{A_sl}, \code{CN_bio_sl} and \code{CN_fast_init_sl}, respectively.}
   \item{pooltypes}{integer vector with a length equal to the number of pools. Contains information necessary for the calculation of \code{N0}. Allowed values are 1-6. 1: topsoil fast pool, 2: topsoil bio or humus pool, 3: topsoil chemically stable or inert pool, 4: subsoil fast pool, 5: subsoil bio or humus pool, 6: subsoil chemically stable or inert pool. Predefined values are (1,1,2,2,3) when \code{model = "RothC"}, (1,2,3,4,5,6) when \code{model = "C-Tool"} or \code{model = "C-Tool-org"}, (1,1,1,2,3) when \code{model = "Yasso07"} or \code{model = "Yasso15"} or \code{model = "Yasso20"}. Only used when \code{calcN = TRUE} and \code{calcN0 = TRUE}.}
   \item{CN_fast_init}{number that defines the initial CN ratio for fast pools (\code{pooltypes = 1 or 4}). Only used when \code{Nin} (or \code{Nin_sl}) and \code{Cin} (or \code{Cin_sl}) do not provide enough information for the estimation of initial nitrogen. The user will be informed about it when \code{init_info = TRUE}. Only used when \code{calcN = TRUE} and \code{calcN0 = TRUE}.}
   \item{CN_bio}{number that defines the initial CN ratio for slow pools (\code{pooltypes = 2 or 5}). Only used when \code{calcN = TRUE} and \code{calcN0 = TRUE}.}
+  \item{CN_spin}{vector with a length equal to the number of pools. Defines the initial CN ratios for spin-up runs. For the case where the spinup starts from bare ground without soil organic components, the CN ratios of the pools must be defined. Since the CN ratios would then only be influenced by external inputs, the CN ratios for slow target pools without input would exceptionally be defined by the CN ratios of fast source pools due to a lack of alternatives. To prevent this, it is necessary to define initial CN ratios for spin-up runs in that case.
+  Only used when \code{calcN = TRUE} and \code{spinup = TRUE} and for elements of which that of \code{C0} (and \code{N0}) are zero.}
   \item{CN_fast_init_sl}{list with a length of number of sites to simulate. Each list element represents a site and must be in \code{CN_fast_init} format. Only used when \code{calcN = TRUE}, \code{multisite = TRUE} and \code{calcN0 = TRUE}. When \code{multisite = TRUE}, \code{CN_fast_init} can be passed instead of \code{CN_fast_init_sl} to have the same argument for all sites.}
   \item{CN_bio_sl}{list with a length of number of sites to simulate. Each list element represents a site and must be in \code{CN_bio} format. Only used when \code{calcN = TRUE}, \code{multisite = TRUE} and \code{calcN0 = TRUE}. When \code{multisite = TRUE}, \code{CN_bio} can be passed instead of \code{CN_bio_sl} to have the same argument for all sites.}
+  \item{CN_spin_sl}{list of vectors that defines the initial CN ratios for spin-up runs. Each list element represents a site and must be in \code{CN_spin} format. Only used when \code{multisite = TRUE}, \code{calcN = TRUE} and \code{spinup = TRUE} and for elements of which that of \code{N0_sl} are zero. When \code{multisite = TRUE}, \code{CN_spin} can be passed instead of \code{CN_spin_sl} to have the same argument for all sites.}
   \item{init_info}{logical indicating whether additional information about the calculation of initial carbon, initial nitrogen, and CN ratio should be printed out during the simulations. Only used when \code{calcC0 = TRUE} or \code{calcN0 = TRUE}. }
   \item{model}{character string specifying a predefined soil organic carbon model to use. Valid options are \code{"Yasso07"}, \code{"Yasso15"}, \code{"Yasso20"}, \code{"RothC"}, \code{"C-Tool"} or \code{"C-Tool-org"}. When \code{not NULL}, \code{xi} and \code{A} are calculated by \code{SORCERING}, and \code{env_in} must be specified. Additionally, \code{theta} can be specified to not use standard model parameters. See model parameters table in section 'Details' for standard parameters used. If \code{calcN0 = TRUE} and \code{pooltypes = NULL} model-specific standard values for \code{pooltypes} are used.}
+  \item{spinup}{logical indicating whether the simulations should run in spin-up mode. Then, from all time-depending input (\code{Cin}, \code{Nin}, \code{xi}, \code{env_in} and site list derivates) 
+  random years (drawn each time step when \code{tsteps = "weekly"}, each twelfth time step when \code{tsteps = "monthly"} and each fifty-second time step when \code{tsteps = "weekly"}) are taken and \code{t_spin} defines the length of the spin-up. If modelling multiple sites, \code{t_spin_sl} allows for varying spin-up times. The length of the time-depending input is independent of the spin-up length, but all input data must refer to a specific reference period.}
+  \item{t_spin}{integer number of spin-up time steps.}
+  \item{t_spin_sl}{list with a length of number of sites to simulate or integer number of spin-up time steps. If list, each list element represents a site and must be in \code{t_spin} format. If integer number, applied to all sites. Only used when \code{multisite = TRUE}.}
 }
 \details{
   \code{SORCERING} is a general model framework to describe soil organic carbon (SOC) dynamics and soil organic nitrogen (SON) dynamics based on models of first-order kinetics.
@@ -153,7 +161,7 @@ sorcering(    A = NULL,
 
   \strong{Value C}
   
-  \code{SORCERING} calculates SOC applying a given SOC model for every simulation time step defined by passing \code{tsteps} and \code{t_sim}.
+  \code{SORCERING} calculates SOC applying a given SOC model for every simulation time step defined by passing \code{tsteps} and the number of rows of \code{Cin} (or number of rows of matrix elements in \code{Cin_sl}).
   SOC models applied here are defined by a number of pools, each characterised by specific decomposition and turnover rates.
   The model-specific decomposition kinetics and SOC fluxes among pools are described by a set of partial differential equations represented by the transfer matrix 
   \mjeqn{A}{A} (as passed with \code{A} or provided by \code{model}). 
@@ -305,13 +313,13 @@ sorcering(    A = NULL,
 When modelling uncertainties (as can be defined by passing e.g. \code{Cin}, \code{Nin}, \code{xi} or \code{theta}), 
 the output is even extended to include another list dimension that covers these uncertainties.
 The lowest output list-level contains the following components:
-  \item{C}{matrix with a number of rows corresponding to \code{t_sim} and a number of columns equal to the number of pools. Contains soil organic carbon [\ifelse{html}{\out{tC ha<sup>-1</sup>}}{\eqn{\mathrm{tC \, ha^{-1}}}}].}
-  \item{N}{matrix with a number of rows corresponding to \code{t_sim} and a number of columns equal to the number of pools. Contains soil organic nitrogen [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}]. Only generated when \code{calcN = TRUE}.}
-  \item{Nloss}{matrix with a number of rows corresponding to \code{t_sim} and a number of columns equal to the number of pools. Contains nitrogen losses [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}]. 
+  \item{C}{matrix with a number of rows corresponding to simulation time steps (number of rows of \code{Cin} or number of rows of matrix elements in \code{Cin_sl}, when \code{spinup = FALSE}), or to \code{t_spin} resp. \code{t_spin_sl}, when \code{spinup = TRUE}) and a number of columns equal to the number of pools. Contains soil organic carbon [\ifelse{html}{\out{tC ha<sup>-1</sup>}}{\eqn{\mathrm{tC \, ha^{-1}}}}].}
+  \item{N}{matrix with a number of rows corresponding to simulation time steps (number of rows of \code{Cin} or number of rows of matrix elements in \code{Cin_sl}, when \code{spinup = FALSE}), or to \code{t_spin} resp. \code{t_spin_sl}, when \code{spinup = TRUE}) and a number of columns equal to the number of pools. Contains soil organic nitrogen [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}]. Only generated when \code{calcN = TRUE}.}
+  \item{Nloss}{matrix with a number of rows corresponding to simulation time steps (number of rows of \code{Cin} or number of rows of matrix elements in \code{Cin_sl}, when \code{spinup = FALSE}), or to \code{t_spin} resp. \code{t_spin_sl}, when \code{spinup = TRUE}) and a number of columns equal to the number of pools. Contains nitrogen losses [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}]. 
   Positive values indicate that nitrogen was lost in the pools between this and the previous time steps (taking nitrogen decomposition and input into account). Only generated when \code{calcN = TRUE}.}
-  \item{Nmin}{matrix with a number of rows corresponding to \code{t_sim} and a number of columns equal to the number of pools. Contains nitrogen mineralisation [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}].  If values are negative, nitrogen immobilisation exceeds mineralisation. Only generated when \code{calcN = TRUE}.}
-  \item{Nmin.sink.1, ..., Nmin.sink.n}{matrices with a number of rows corresponding to \code{t_sim} and a number of columns equal to the number of pools \code{n}. Contain pool-specific nitrogen mineralisation sinks [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}] (from the pool according to variable index [1, ..., n] to the pool according to column number). If the sink is the pool itself (index equals column number) the amount of decomposition is recorded. Only generated when \code{calcN = TRUE}.}
-  \item{Nbalance}{matrix with a number of rows corresponding to \code{t_sim} and three columns. Contains information on overall N changes in the soil between two time steps (first column) and information on total system N balance calculated based on total \code{Nloss} (second column) and based on total \code{Nmin} (third column) [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}]. Only generated when \code{calcN = TRUE} and \code{calcNbalance = TRUE}.}
+  \item{Nmin}{matrix with a number of rows corresponding to simulation time steps (number of rows of \code{Cin} or number of rows of matrix elements in \code{Cin_sl}, when \code{spinup = FALSE}), or to \code{t_spin} resp. \code{t_spin_sl}, when \code{spinup = TRUE}) and a number of columns equal to the number of pools. Contains nitrogen mineralisation [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}].  If values are negative, nitrogen immobilisation exceeds mineralisation. Only generated when \code{calcN = TRUE}.}
+  \item{Nmin.sink.1, ..., Nmin.sink.n}{matrices with a number of rows corresponding to simulation time steps (number of rows of \code{Cin} or number of rows of matrix elements in \code{Cin_sl}, when \code{spinup = FALSE}), or to \code{t_spin} resp. \code{t_spin_sl}, when \code{spinup = TRUE}) and a number of columns equal to the number of pools \code{n}. Contain pool-specific nitrogen mineralisation sinks [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}] (from the pool according to variable index [1, ..., n] to the pool according to column number). If the sink is the pool itself (index equals column number) the amount of decomposition is recorded. Only generated when \code{calcN = TRUE}.}
+  \item{Nbalance}{matrix with a number of rows corresponding to simulation time steps (number of rows of \code{Cin} or number of rows of matrix elements in \code{Cin_sl}, when \code{spinup = FALSE}), or to \code{t_spin} resp. \code{t_spin_sl}, when \code{spinup = TRUE}) and three columns. Contains information on overall N changes in the soil between two time steps (first column) and information on total system N balance calculated based on total \code{Nloss} (second column) and based on total \code{Nmin} (third column) [\ifelse{html}{\out{tN ha<sup>-1</sup>}}{\eqn{\mathrm{tN \, ha^{-1}}}}]. Only generated when \code{calcN = TRUE} and \code{calcNbalance = TRUE}.}
 }
   
 
@@ -331,32 +339,35 @@ and \code{Rdpack} \insertCite{Boshnakov2021}{sorcering}.
 }
 
 \examples{
-  #1 Example of RothC application with fictional input for a single site
+
+
+  #1 RothC application with fictional input for a single site
 
   #1.1 Input
 
   data(RothC_Cin_ex, RothC_Nin_ex, RothC_N0_ex, RothC_C0_ex, RothC_xi_ex, 
-    RothC_site_ex, RothC_env_in_ex)  #fictional data
+    RothC_site_ex, RothC_env_in_ex) #fictional data
   
   #1.2 Simulations
   
-  #In the following two methods are presented, one with a RothC as a predefined model (1.2.1), 
-  #one where the RothC rate modifying factors must be calculated beforehand (1.2.2). 
-  #Both methods lead to the same results.
+  #In the following two methods are presented, one with a RothC as a predefined 
+  #model (1.2.1), one where the RothC rate modifying factors must be calculated 
+  #beforehand (1.2.2). Both methods lead to the same results.
 
   #1.2.1 Simulation with predefined model
   
-  out_rothC <- sorcering( model="RothC", site=RothC_site_ex, env_in=RothC_env_in_ex, t_sim=60, 
-  Cin=RothC_Cin_ex, Nin=RothC_Nin_ex, N0=RothC_N0_ex, C0=RothC_C0_ex, calcN=TRUE, tsteps="monthly")
+  out_rothC <- sorcering( model="RothC", site=RothC_site_ex, env_in=RothC_env_in_ex, 
+    Cin=RothC_Cin_ex, Nin=RothC_Nin_ex, N0=RothC_N0_ex, C0=RothC_C0_ex, 
+    calcN=TRUE, tsteps="monthly")
   
-  #1.2.2 Simulation with own model definition and rate modifying factor definition
+  #1.2.2 Simulation with own model definition and rate modifying factor definition 
 
   A_RothC <- fget_A_RothC(clay=30) #create transfer matrix for RothC
-  out_rothC_own <- sorcering(A=A_RothC, xi=RothC_xi_ex, t_sim=60, Cin=RothC_Cin_ex, 
+  out_rothC_own <- sorcering(A=A_RothC , xi=RothC_xi_ex, Cin=RothC_Cin_ex, 
     Nin=RothC_Nin_ex, N0=RothC_N0_ex, C0=RothC_C0_ex, calcN=TRUE, tsteps="monthly")
-  #Note that RothC_xi_ex contains site and model specific rate modifying factors that are only valid
-  #in this specific example. Generally, xi must be calculated by the user for different 
-  #environmental conditions and SOC models used. 
+  #Note that RothC_xi_ex contains site and model specific rate modifying factors that 
+  #are only valid in this specific example. Generally, xi must be calculated by the 
+  #user for different environmental conditions and SOC models used. 
 
   #1.3 Results
 
@@ -368,37 +379,37 @@ and \code{Rdpack} \insertCite{Boshnakov2021}{sorcering}.
   all( abs(out_rothC$N-out_rothC_own$N) < 1e-14)
 
   #example plot
-    oldpar <- par(no.readonly = TRUE) #save old par 
+    oldpar <- par(no.readonly=TRUE) #save old par 
   par(mfrow=c(1,1),mar=c(4,4,1,4))
-  plot(rowSums(out_rothC$N),axes=FALSE, col=1, cex.lab=2,xlab="",ylab="",ylim=c(0,9),pch=20)
+  plot(rowSums(out_rothC$N),axes=FALSE, col=1, cex.lab=2,xlab="",ylab="",ylim=c(0,9),
+    pch=20)
   par(new=TRUE)
   plot(rowSums(RothC_Cin_ex)/rowSums(RothC_Nin_ex),
     axes=FALSE,col=2, cex.lab=2,xlab="",ylab="",ylim=c(0,60),pch=20)
-  axis(side=2, pos = 0,
-    labels = (0:6)*1.5, at=(0:6)*10, hadj=0.7, padj = 0.5, cex.axis=2,las=1,col.axis=1)
-  axis(side=4, pos = 60,
-    labels = (0:6)*10, at=(0:6)*10, hadj=0, padj = 0.5, cex.axis=2, las=1,col.axis=2)
-  axis(side=1, pos = 0,
-    labels =  (0:6)*10 , at=(0:6)*10, hadj=0.5, padj = 0, cex.axis=2)
+  axis(side=2, pos=0,
+    labels=(0:6)*1.5, at=(0:6)*10, hadj=0.7, padj=0.5, cex.axis=2,las=1,col.axis=1)
+  axis(side=4, pos=60,
+    labels=(0:6)*10, at=(0:6)*10, hadj=0, padj=0.5, cex.axis=2, las=1,col.axis=2)
+  axis(side=1, pos=0,
+    labels= (0:6)*10 , at=(0:6)*10, hadj=0.5, padj=0, cex.axis=2)
   title(ylab=expression("total N  [t ha"^-1*"]"), line=2, cex.lab=2)
   mtext("C input / N input", side=4, line=2, cex=2,col=2)
-  title(xlab="time", line= 2, cex.lab=2)    
+  title(xlab="time", line=2, cex.lab=2)    
   par(oldpar) #back to old par
-  
-  #2 Example of RothC application with fictional input for a multiple site application
+
+  #2 RothC application with fictional input for a multiple site application
   
   #2.1 Input
 
-  #fictional data
-  data(RothC_Cin_ex_sl, RothC_Nin_ex_sl, RothC_N0_ex, RothC_C0_ex, 
-    RothC_site_ex, RothC_env_in_ex) 
+  data(RothC_Cin_ex_sl, RothC_Nin_ex_sl, RothC_N0_ex, RothC_C0_ex, RothC_site_ex, 
+    RothC_env_in_ex) #fictional data
   
   #2.2. Simulation
   
   out_multi_rothC <- sorcering( model="RothC", site_sl=rep(list(RothC_site_ex),3), 
-    env_in_sl=rep(list(RothC_env_in_ex),3), t_sim_sl=list(60,60,60), 
-    Cin_sl=RothC_Cin_ex_sl, Nin_sl=RothC_Nin_ex_sl, N0_sl=rep(list(RothC_N0_ex),3), 
-    C0_sl=rep(list(RothC_C0_ex),3), calcN=TRUE, tsteps="monthly", multisite=TRUE, 
+    env_in_sl=rep(list(RothC_env_in_ex),3), Cin_sl=RothC_Cin_ex_sl, 
+    Nin_sl=RothC_Nin_ex_sl, N0_sl=rep(list(RothC_N0_ex),3),C0_sl=rep(list(RothC_C0_ex),3), 
+    calcN=TRUE, tsteps="monthly", multisite=TRUE, 
     sitelist=list("normal","half_input","double_Cin"))
 
   #2.3 Results
@@ -409,7 +420,7 @@ and \code{Rdpack} \insertCite{Boshnakov2021}{sorcering}.
   summary(out_multi_rothC$double_Cin)
   
   #example plot
-  oldpar <- par(no.readonly = TRUE) #save old par 
+  oldpar <- par(no.readonly=TRUE) #save old par 
   par(mfrow=c(1,1),mar=c(4,4,1,4))
   for (listelement in c(1:3))
   {
@@ -422,40 +433,41 @@ and \code{Rdpack} \insertCite{Boshnakov2021}{sorcering}.
         type="l", lwd=lwidth, lty=listelement+2,axes=FALSE,col=2, cex.lab=2,xlab="",
         ylab="",ylim=c(0,120))
     par(new=TRUE)
-  }
-  axis(side=2, pos = 0,
-    labels = (0:6)*3, at=(0:6)*20, hadj=0.7, padj = 0.5, cex.axis=2,las=1,col.axis=1)
-  axis(side=4, pos = 60,
-    labels = (0:6)*20, at=(0:6)*20, hadj=0, padj = 0.5, cex.axis=2, las=1,col.axis=2)
-  axis(side=1, pos = 0,
-    labels =  (0:6)*10 , at=(0:6)*10, hadj=0.5, padj = 0, cex.axis=2)
+  }    
+  axis(side=2, pos=0,
+    labels=(0:6)*3, at=(0:6)*20, hadj=0.7, padj=0.5, cex.axis=2,las=1,col.axis=1)
+  axis(side=4, pos=60,
+    labels=(0:6)*20, at=(0:6)*20, hadj=0, padj=0.5, cex.axis=2, las=1,col.axis=2)
+  axis(side=1, pos=0,
+    labels= (0:6)*10 , at=(0:6)*10, hadj=0.5, padj=0, cex.axis=2)
   title(ylab=expression("total N  [t ha"^-1*"]"), line=2, cex.lab=2)
   mtext("C input / N input", side=4, line=2, cex=2,col=2)
-  title(xlab="time", line= 2, cex.lab=2)    
-  legend(x=40,y=100,legend = c("normal","half_input","double_Cin"),lty = c(3,4,5),lwd=c(1,3,1))
+  title(xlab="time", line=2, cex.lab=2)    
+  legend(x=40,y=100,legend=c("normal","half_input","double_Cin"),lty=c(3,4,5),
+   lwd=c(1,3,1))
   par(oldpar) #back to old par
-  
-  #3 Example of RothC application with fictional input 
+
+  #3 RothC application with fictional input 
   #and fictional measurement data to calculate C0 and N0
   
   #3.1 Input
-
-  #fictional data  
-  data(RothC_Cin_ex_sl, RothC_Nin_ex_sl, RothC_site_ex, RothC_env_in_ex, meas_data_ex) 
+  
+  #fictional data 
+  data(RothC_Cin_ex_sl, RothC_Nin_ex_sl, RothC_site_ex, RothC_env_in_ex, meas_data_ex)  
 
   #3.2. Simulation
   
-  out_rothC_C0<-sorcering( model="RothC", site=RothC_site_ex, env_in=RothC_env_in_ex, t_sim=60, 
-    Cin=RothC_Cin_ex, Nin=RothC_Nin_ex, calcC0=TRUE, calcN=TRUE, calcN0=TRUE, tsteps="monthly", 
-    meas_data=meas_data_ex) 
+  out_rothC_C0<-sorcering( model="RothC", site=RothC_site_ex, env_in=RothC_env_in_ex, 
+    Cin=RothC_Cin_ex, Nin=RothC_Nin_ex, calcC0=TRUE, calcN=TRUE, calcN0=TRUE, 
+    tsteps="monthly", meas_data=meas_data_ex) 
 
   #3.3 Results
 
   #output structure summary
   summary(out_rothC_C0)
 
-  #example plot 
-  oldpar <- par(no.readonly = TRUE) #save old par 
+  #example plot
+  oldpar <- par(no.readonly=TRUE) #save old par 
   par(mfrow=c(1,1),mar=c(4,4,1,4))
   plot(rowSums(out_rothC_C0$N),axes=FALSE, col=1, cex.lab=2,xlab="",ylab="",ylim=c(0,9),
     type="l",lwd=1)
@@ -469,26 +481,26 @@ and \code{Rdpack} \insertCite{Boshnakov2021}{sorcering}.
   plot(x=meas_data_ex[,1],y=meas_data_ex[,2],axes=FALSE, col=2, cex.lab=2,xlab="",ylab="",
     xlim=c(0,length(rowSums(out_rothC_C0$N))),ylim=c(0,90),pch=4,cex=3)
   par(new=TRUE)
-  axis(side=2, pos = 0,            
-    labels = (0:8)*1, at=(0:8)*10, hadj=1, padj = 0.5, cex.axis=2,las=1,col.axis=1)
-  axis(side=4, pos = 60,
-    labels = (0:8)*10, at=(0:8)*10, hadj=0, padj = 0.5, cex.axis=2, las=1,col.axis=2)
-  axis(side=1, pos = 0,
-    labels =  (0:8)*10 , at=(0:8)*10, hadj=0.5, padj = 0, cex.axis=2)
+  axis(side=2, pos=0,
+    labels=(0:8)*1, at=(0:8)*10, hadj=1, padj=0.5, cex.axis=2,las=1,col.axis=1)
+  axis(side=4, pos=60,
+    labels=(0:8)*10, at=(0:8)*10, hadj=0, padj=0.5, cex.axis=2, las=1,col.axis=2)
+  axis(side=1, pos=0,
+    labels= (0:8)*10 , at=(0:8)*10, hadj=0.5, padj=0, cex.axis=2)
   title(ylab=expression("SON [t ha"^-1*"]"), line=2, cex.lab=2)
   mtext(expression("SOC [t ha"^-1*"]"), side=4, line=3, cex=2,col=2)
-  title(xlab="time", line= 2, cex.lab=2)  
-  legend(x=30,y=30,legend = c("model result","measurement"),lwd=c(1,0))
-  legend(x=31,y=30,legend = c("",""),pch=4,pt.cex=c(0,3),bty="n")
+  title(xlab="time", line=2, cex.lab=2)  
+  legend(x=30,y=30,legend=c("model result","measurement"),lwd=c(1,0))
+  legend(x=31,y=30,legend=c("",""),pch=4,pt.cex=c(0,3),bty="n")
   par(oldpar) #back to old par
-  
-  #4 Example of Yasso15 application using multiple sites and 
+
+  #4 Yasso15 application using multiple sites and 
   #input values of different wood diameters which take uncertainties into account
   
   #4.1 Input
 
-  data(Yasso_Cin_ex_wood_u_sl, Yasso_Nin_ex_wood_u_sl, Yasso_C0_ex_sl, 
-    Yasso_N0_ex_sl, RothC_env_in_ex) #fictional data 
+  data(Yasso_Cin_ex_wood_u_sl, Yasso_Nin_ex_wood_u_sl, Yasso_C0_ex_sl, Yasso_N0_ex_sl, 
+    RothC_env_in_ex) #fictional data 
   
   #show last entries of C input for 3rd site, 2nd wood layer, 4th uncertainty layer
   tail(Yasso_Cin_ex_wood_u_sl[[3]][[2]][[4]])
@@ -501,21 +513,23 @@ and \code{Rdpack} \insertCite{Boshnakov2021}{sorcering}.
     
   #4.2 Simulation
   
-  out_multi_yasso_wood_unc <- sorcering( model="Yasso15", env_in_sl=rep(list(Yasso_env_in_ex),3), 
-    t_sim_sl=list(60,60,60),wood_diam_sl=wood_diam_ex_sl, tsteps="monthly", multisite=TRUE,
-    Cin_wood_sl=Yasso_Cin_ex_wood_u_sl, Nin_wood_sl=Yasso_Nin_ex_wood_u_sl, 
-    N0_sl=Yasso_N0_ex_sl, C0_sl=Yasso_C0_ex_sl, calcN=TRUE, sitelist=list("a","b","c"))
+  out_multi_yasso_wood_unc <- sorcering( model="Yasso15", C0_sl=Yasso_C0_ex_sl,
+    env_in_sl=rep(list(Yasso_env_in_ex),3), wood_diam_sl=wood_diam_ex_sl, 
+    Cin_wood_sl=Yasso_Cin_ex_wood_u_sl,Nin_wood_sl=Yasso_Nin_ex_wood_u_sl, 
+    N0_sl=Yasso_N0_ex_sl, calcN=TRUE, tsteps="monthly", multisite=TRUE, 
+    sitelist=list("a","b","c"))
     
   #4.3 Results
   
   #show the last C results for 3rd site, 4th uncertainty layer
   tail(out_multi_yasso_wood_unc[[3]][[4]]$C) 
-  
-  #5 Example of RothC application using stochastically varying parameters and multiple sites 
 
-  #5.1 Fictional data 
+  #5 RothC application using stochastically varying parameters 
+  #and multiple sites 
+
+  #5.1 fictional data 
   data(RothC_Cin_ex_sl, RothC_Nin_ex_sl, RothC_C0_ex, RothC_N0_ex, 
-  RothC_site_ex, RothC_env_in_ex)
+    RothC_site_ex, RothC_env_in_ex)
   
   #standard deviations [%] used for each of the 7 RothC theta parameters 
   RothC_theta_unc <- c(0,0,1,1,1,1,2)
@@ -523,11 +537,11 @@ and \code{Rdpack} \insertCite{Boshnakov2021}{sorcering}.
   #5.2 Simulation
   
   out_sl <- sorcering( model="RothC", site_sl=rep(list(RothC_site_ex),3), 
-  env_in_sl=rep(list(RothC_env_in_ex),3), t_sim_sl=list(60,60,60),
-  Cin_sl=RothC_Cin_ex_sl, Nin_sl=RothC_Nin_ex_sl, C0_sl=rep(list(RothC_C0_ex),3), 
-  N0_sl=rep(list(RothC_N0_ex),3),calcN=TRUE,theta_n_unc=10,
-  theta_unc=RothC_theta_unc, multisite=TRUE, 
-  sitelist=list("normal","half_input","double_Cin"))
+    env_in_sl=rep(list(RothC_env_in_ex),3), Cin_sl=RothC_Cin_ex_sl, 
+    Nin_sl=RothC_Nin_ex_sl, C0_sl=rep(list(RothC_C0_ex),3), 
+    N0_sl=rep(list(RothC_N0_ex),3),calcN=TRUE,theta_n_unc=10,
+    theta_unc=RothC_theta_unc, multisite=TRUE, 
+    sitelist=list("normal","half_input","double_Cin"))
 
   #5.3 Means and standard deviation
   
@@ -541,17 +555,17 @@ and \code{Rdpack} \insertCite{Boshnakov2021}{sorcering}.
   out_sl_arr_N_sd<-
   array(0, dim=c(dim(out_sl_arr_N)[1],dim(out_sl_arr_N)[2],dim(out_sl_arr_N)[4]))
   for (dim3 in c(1:dim(out_sl_arr_N)[4])) 
-  out_sl_arr_N_sd[,,dim3]<-apply(out_sl_arr_N[,,,dim3],c(1:2),sd)
+    out_sl_arr_N_sd[,,dim3]<-apply(out_sl_arr_N[,,,dim3],c(1:2),sd)
 
   #5.4 Results
   
   #show the last N means for stand 1 
   tail(out_sl_arr_N_mean[,,1])
 
-  #show the last N standard deviations for stand 1 
+  #show the last N standard deviations for stand 1
   tail(out_sl_arr_N_sd[,,1])  
-  
-  #6 Example of how to create input lists for a RothC application using stochastically 
+
+  #6 How to create input lists for a RothC application using stochastically 
   #varying inputs and input scenarios
 
   #6.1 Input
@@ -585,9 +599,9 @@ and \code{Rdpack} \insertCite{Boshnakov2021}{sorcering}.
 
   #6.2 Simulation
   out_sl <- sorcering( model="RothC", site_sl=rep(list(RothC_site_ex),3), 
-  env_in_sl=rep(list(RothC_env_in_ex),3), t_sim_sl=list(60,60,60),
-  Cin_sl=Cin_u_sl, C0_sl=list(RothC_C0_ex,RothC_C0_ex,RothC_C0_ex), tsteps="monthly", 
-  multisite=TRUE, sitelist=list("normal","half_input","double_Cin"))
+    env_in_sl=rep(list(RothC_env_in_ex),3),Cin_sl=Cin_u_sl, 
+    C0_sl=list(RothC_C0_ex,RothC_C0_ex,RothC_C0_ex), tsteps="monthly", 
+    multisite=TRUE, sitelist=list("normal","half_input","double_Cin"))
   
   #6.3 Means and standard deviation
   
@@ -599,9 +613,9 @@ and \code{Rdpack} \insertCite{Boshnakov2021}{sorcering}.
 
   #standard deviation
   out_sl_arr_sd<-
-  array(0, dim=c(dim(out_sl_arr)[1],dim(out_sl_arr)[2],dim(out_sl_arr)[4]))
+    array(0, dim=c(dim(out_sl_arr)[1],dim(out_sl_arr)[2],dim(out_sl_arr)[4]))
   for (dim3 in c(1:dim(out_sl_arr)[4])) 
-  out_sl_arr_sd[,,dim3]<-apply(out_sl_arr[,,,dim3],c(1:2),sd)
+    out_sl_arr_sd[,,dim3]<-apply(out_sl_arr[,,,dim3],c(1:2),sd)
   
   #6.4 Results
   
@@ -616,38 +630,86 @@ and \code{Rdpack} \insertCite{Boshnakov2021}{sorcering}.
   totalC_s3<-rowSums(out_sl_arr_sd[,,3])
 
   #example plot
-  oldpar <- par(no.readonly = TRUE) #save old par 
+  oldpar <- par(no.readonly=TRUE) #save old par 
   par(mfrow=c(1,1),mar=c(4,4,1,4))
   plot(totalC_m1,axes=FALSE, col=2, cex.lab=2,xlab="",ylab="",ylim=c(0,100),
-      type="l",lwd=1)
+    type="l",lwd=1)
   par(new=TRUE)
   plot(totalC_m2,axes=FALSE, col=3, cex.lab=2,xlab="",ylab="",ylim=c(0,100),
-      type="l",lwd=1)
+    type="l",lwd=1)
   par(new=TRUE)
   plot(totalC_m3,axes=FALSE, col=4, cex.lab=2,xlab="",ylab="",ylim=c(0,100),
-      type="l",lwd=1)
+    type="l",lwd=1)
   par(new=TRUE)
   polygon(c(1:60,60:1),c(totalC_m1+totalC_s1, rev(totalC_m1-totalC_s1)),
-  border=NA,col=rgb(1,0,0,0.27),density=40,angle=180,xlab="",ylab="") 
+    border=NA,col=rgb(1,0,0,0.27),density=40,angle=180,xlab="",ylab="") 
   par(new=TRUE)
   polygon(c(1:60,60:1),c(totalC_m2+totalC_s2, rev(totalC_m2-totalC_s2)),
-  border=NA,col=rgb(0,1,0,0.27),density=30,xlab="",ylab="") 
+    border=NA,col=rgb(0,1,0,0.27),density=30,xlab="",ylab="") 
   par(new=TRUE)
   polygon(c(1:60,60:1),c(totalC_m3+totalC_s3, rev(totalC_m3-totalC_s3)),
-  border=NA,col=rgb(0,0,1,0.27),density=25,angle=90,xlab="",ylab="") 
+    border=NA,col=rgb(0,0,1,0.27),density=25,angle=90,xlab="",ylab="") 
   par(new=TRUE)
-  axis(side=2, pos = 0,
-      labels = (0:10)*1, at=(0:10)*10, hadj=1, padj = 0.5, cex.axis=2,las=1,col.axis=1)
-  axis(side=1, pos = 0,
-      labels =  (0:6)*10 , at=(0:6)*10, hadj=0.5, padj = 0, cex.axis=2)
+  axis(side=2, pos=0,
+      labels=(0:10)*1, at=(0:10)*10, hadj=1, padj=0.5, cex.axis=2,las=1,col.axis=1)
+  axis(side=1, pos=0,
+      labels= (0:6)*10 , at=(0:6)*10, hadj=0.5, padj=0, cex.axis=2)
   title(ylab=expression("SOC [t ha"^-1*"]"), line=2, cex.lab=2)
-  title(xlab="time", line= 2, cex.lab=2)  
+  title(xlab="time", line=2, cex.lab=2)  
   legend(x=20,y=30,fill=c(0,0,0,4,2,3),density=c(0,0,0,25,40,30),angle=c(0,0,0,90,0,45),
-  border=c(0,0,0,1,1,1),legend = c("mean double input scenario","mean regular input scenario",
-  "mean half input scneario","uncertainty range double input scenario",
-  "uncertainty range regular input scenario","uncertainty range half input scenario"))
+    border=c(0,0,0,1,1,1),legend=c("mean double input scenario",
+    "mean regular input scenario", "mean half input scneario",
+    "uncertainty range double input scenario", "uncertainty range regular input scenario",
+    "uncertainty range half input scenario"))
   legend(x=20,y=30,lty=c(1,1,1,0,0,0),seg.len=c(1,1,1,0,0,0), col=c(4,2,3,0,0,0),
-  legend = c("","","","","",""),bty="n")
-  par(oldpar) #back to old par
+    legend=c("","","","","",""),bty="n")
+  par(oldpar) #back to old par 
+
+  #7 RothC application with fictional input for a spin-up application
   
+  #7.1 Input
+
+  #fictional data
+  data(RothC_Cin_ex_sl_spin, RothC_Nin_ex_sl_spin, RothC_site_ex, RothC_env_in_ex) 
+  
+  #7.2. Simulation
+  
+  out_multi_rothC <- sorcering( model="RothC", site_sl=rep(list(RothC_site_ex),3), 
+    env_in_sl=rep(list(RothC_env_in_ex[1:12,]),3), Cin_sl=RothC_Cin_ex_sl_spin, 
+    Nin_sl=RothC_Nin_ex_sl_spin, calcN=TRUE, tsteps="monthly", multisite=TRUE, 
+    sitelist=list("normal","half_input","double_Cin"), spinup=TRUE, t_spin_sl=36000,
+    C0=c(0,0,0,0,20), N0=c(0,0,0,0,2), CN_spin=c(100,100,50,50,10))
+
+  #7.3 Results
+  
+  #example plot
+  oldpar <- par(no.readonly=TRUE) #save old par 
+  par(mfrow=c(1,1),mar=c(4,4,1,4))
+  for (listelement in c(1:3))
+  {
+    lwidth<-1
+    if (listelement==2)lwidth<-3
+    printN<-rowSums(out_multi_rothC[[listelement]]$N)
+    printseq<-seq.int(1L,length(printN),100L) 
+    printC<-rowSums(out_multi_rothC[[listelement]]$C)
+    plot(printN[printseq],axes=FALSE, col=1,type="l", lwd=lwidth,
+        lty=listelement+2,cex.lab=2,xlab="",ylab="",ylim=c(0,30))
+    par(new=TRUE)
+    plot(printC[printseq],axes=FALSE, col=2,type="l", lwd=lwidth,
+        lty=listelement+2,cex.lab=2,xlab="",ylab="",ylim=c(0,180))
+    par(new=TRUE)
+  }
+  axis(side=2, pos=0,
+    labels=(0:6)*5, at=(0:6)*30, hadj=0.7, padj=0.5, cex.axis=2,las=1,col.axis=1)
+  axis(side=4, pos=360,
+    labels=(0:6)*30, at=(0:6)*30, hadj=0, padj=0.5, cex.axis=2, las=1,col.axis=2)
+  axis(side=1, pos=0,
+    labels= (0:6)*6000 , at=(0:6)*60, hadj=0.5, padj=0, cex.axis=2)
+  title(ylab=expression("total N  [t ha"^-1*"]"), line=2, cex.lab=2)
+  mtext(expression("total C [t ha"^-1*"]"), side=4, line=2, cex=2,col=2)
+  title(xlab="time", line=2, cex.lab=2)    
+  legend(x=120,y=140,legend=c("normal","half_input","double_Cin"),lty=c(3,4,5),
+    lwd=c(1,3,1))
+  par(oldpar) #back to old par
+
 }

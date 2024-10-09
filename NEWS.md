@@ -1,5 +1,46 @@
 
-sorcering v1.0.1
+Changes in version 1.1.0
+===============================
+
+GENERAL CHANGES
+
+- Introduced the spin-up modelling mode. It is now possible to perform model spin-up runs for single or multiple sites. 
+Along with that there are five new function arguments: spinup, t_spin, CN_spin, t_spin_sl and CN_spin_sl, the latter two allowing for varying spin-up lengths
+per site.
+
+- Removed two function arguments: t_sim and t_sim_sl. Simulation time is now completely depending on the carbon input data (Cin, Cin_wood, Cin_sl or Cin_sl_wood).
+The number of rows of the carbon input data defines simulation time steps.
+
+-------------------------------
+
+DOCUMENTATION
+
+- Description for arguments spinup, t_spin, CN_spin, t_spin_sl and CN_spin_sl.
+
+- Adapted time reference changes (since t_sim and t_sim_sl are removed) to the description of arguments and values.
+
+- New example Nr.7 with spin-up application.
+
+- Adapted the changes to Figure 1 and Figure 2 (only vignette).
+
+- Typo: Changed "theta_n_uncertain" to "theta_n_unc" in example Nr.5 (only vignette).
+
+-------------------------------
+
+BUGS
+
+- Indexing error when model="C-Tool". env_in needed to have at least one more rows than simulated time steps. Now fixed.
+
+- Simulations with multiple sites and C_wood_sl as input without uncertainties did not work when calcN = FALSE. Now fixed.
+
+- Error in some warning messages where it said that the number of rows of input data must match the 'number of pools'. Fixed with 'number of time steps'.
+
+- Error in RothC_xi_ex data. 'all( abs(out_rothC$C-out_rothC_own$C) < 1e-14)' in example 1 did not lead to output TRUE. Now fixed.
+
+
+-------------------------------
+
+Changes in version 1.0.1
 ===============================
 
 GENERAL CHANGES

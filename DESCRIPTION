@@ -2,8 +2,8 @@ Package: sorcering
 Type: Package
 Title: Soil Organic Carbon and CN Ratio Driven Nitrogen Modelling
         Framework
-Version: 1.0.1
-Date: 2024-04-26
+Version: 1.1.0
+Date: 2024-10-08
 Authors@R: c(
     person("Marc", "Scherstjanoi", email = "marc.scherstjanoi@thuenen.de", role = c("aut", "cre")),
     person("Rene", "Dechow", email = "rene.dechow@thuenen.de", role = "aut"))
@@ -17,7 +17,8 @@ License: GPL (>= 2)
 Imports: Rcpp (>= 1.0.6), mathjaxr, Rdpack
 LinkingTo: Rcpp, RcppArmadillo
 RdMacros: mathjaxr, Rdpack
+BuildManual: TRUE
 NeedsCompilation: yes
-Packaged: 2024-04-28 09:48:51 UTC; marc
+Packaged: 2024-10-09 09:05:17 UTC; marc
 Repository: CRAN
-Date/Publication: 2024-04-28 11:50:02 UTC
+Date/Publication: 2024-10-09 10:00:01 UTC
