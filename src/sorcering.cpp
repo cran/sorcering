@@ -29,7 +29,8 @@ NumericVector generate_input_vector(Nullable<List&> in_list, int list_element, i
             if (in_listX.size()!=list_length) x1 += " is not of size of C input file!"; 
             pushfrontexception(x1,listname);
             NumericVector in_element = in_listX[list_element];
-            if (pools>0 && in_element.size()!=pools) x1 += " contains elements that do not have the right size (number of pools) "; 
+            if (pools>0 && in_element.size()!=pools && listname!="C0_sl"  ) x1 += " contains elements that do not have the right size (number of pools) "; 
+            if (pools>0 && in_element.size()!=pools && in_element.size()!=1 && listname=="C0_sl"  ) x1 += " contains elements that do not have the right size (number of pools) "; 
             pushfrontexception(x1,listname);
             return in_element;
     } 
@@ -44,7 +45,7 @@ NumericMatrix generate_input_matrix(Nullable<List&> in_list, int list_element, i
             NumericMatrix  in_element = in_listX[list_element];
             if (pools>0 && in_element.ncol()!=pools && (listname!="A_sl" || (listname=="A_sl" && list_element!=0)) ) x1 += " contains elements that do not have the right number of columns (number of pools) "; //(listname!="A_sl" || (listname=="A_sl" && list_element!=0)) : exception when defining n_pools          
             pushfrontexception(x1,listname);
-            if (timesteps>0 && in_element.nrow()!=timesteps && (listname!="A_sl" || (listname=="A_sl" && list_element!=0)) ) x1 += " contains elements that do not have the right number of rows (number of time steps). Make it match C input / first list element C input when modelling uncertainties!"; //(listname!="A_sl" || (listname=="A_sl" && list_element!=0)) : exception when defining n_pools          
+            if (timesteps>0 && in_element.nrow()!=timesteps && (listname!="A_sl" || (listname=="A_sl" && list_element!=0)) ) x1 += " contains elements that do not have the right number of rows (number of time steps). Make it match C input / first list element C input when modelling uncertainties! or Cinput*12 when env_in defining for modelling with annually timesteps"; //(listname!="A_sl" || (listname=="A_sl" && list_element!=0)) : exception when defining n_pools          
             pushfrontexception(x1,listname);
             return in_element;
     }    
@@ -340,7 +341,7 @@ NumericVector C0_analyt(double CN_sp=0, double rmf=0, double t_a0=0, double t_a1
                 double u_hum_hum= 1/a_1_2*(-c_0_3*a_1_1);
                 
                 double u_dpm_dpm=1/t_a0/rmf; // DPM C ( is all C.79)
-                double u_rpm_rpm=1/t_a0/rmf; //RPM C ( is all C_80)
+                double u_rpm_rpm=1/t_a1/rmf; //RPM C ( is all C_80)  //bug: exchanged t_a0 by t_a1 March 18, 2025
                 
                 double u_dpm=u_dpm_dpm+u_bio_dpm+u_hum_dpm; // Total C ( is all C_78)
                 double u_rpm=u_rpm_rpm+u_bio_rpm+u_hum_rpm;
@@ -412,6 +413,7 @@ sorcering(
               const bool calcCN_fast_init = false,
               const bool CTool_input_raw = false,
               const bool RothC_Cin4C0 = false,
+              const NumericVector& RothC_dpmrpm = 1.439024, 
               const Nullable<NumericVector&> C0_fracts = R_NilValue, 
               const bool multisite = false,
               const Nullable<IntegerVector&> pooltypes = R_NilValue, 
@@ -429,7 +431,7 @@ sorcering(
              ) 
 {    
 
-    // sorcering v1.1.0, October 08, 2024
+    // sorcering v1.2, June 2, 2025
     // SORCERING: Soil ORganic Carbon & CN Ratio drIven Nitrogen modellinG framework
     // by 
     // Dr. Marc Scherstjanoi, Thünen Institute of Forest Ecosystems, Eberswalde, Germany &
@@ -472,7 +474,7 @@ sorcering(
         if (Nin.isNull() && Nin_wood.isNull() && calcN) c1 +=("Nin has not been defined. ");
         if (xi.isNull() && (strlen(model.get_cstring())==0)) c1 +=("xi has not been defined. ");
         if (strlen(c1.get_cstring())>10) c1 +=("Was that on purpose? ");
-        if (!yasso15up && !Cin_wood.isNull()) c1 +=("Cin_wood has been defined although not modelling with Yasso15 or Yasso20. This is redundant. Cin would have been enough.");
+        if (!yasso15up && !Cin_wood.isNull()) c1 +=("Cin_wood has been defined although not modelling with Yasso15 or Yasso20.");
         if (yasso15up && wood_diam.isNull() && !Cin_wood.isNull()) c1 +=("wood_diam has not been defined! Cin_wood has no effect this way! ");
         if (strlen(c1.get_cstring())>10) Rcout << c1.get_cstring() << " \n";
         if (!Rf_isNumeric(Cin) && !Cin.isNull() && TYPEOF(Cin)!=VECSXP ) c2 +=("Cin is not of type double (maybe try 'Cin=as.matrix(Cin)') ");
@@ -514,7 +516,7 @@ sorcering(
         if (Cin_sl.isNull() && Cin_wood_sl.isNull()) c1 +=("Cin_sl has not been defined. ");
         if (Nin_sl.isNull() && Nin_wood_sl.isNull() && calcN) c1 +=("Nin_sl has not been defined. ");
         if (strlen(c1.get_cstring())>10) c1 +=("Was that on purpose? ");
-        if (!yasso15up && !Cin_wood_sl.isNull()) c1 +=("Cin_wood_sl has been defined although not modelling with Yasso15 or Yasso20. This is redundant. Cin_sl would have been enough.");
+        if (!yasso15up && !Cin_wood_sl.isNull()) c1 +=("Cin_wood_sl has been defined although not modelling with Yasso15 or Yasso20.");
         if (yasso15up && wood_diam_sl.isNull() && wood_diam.isNull() && !Cin_wood_sl.isNull() ) c1 +=("wood_diam_sl has not been defined! Cin_wood_sl has no effect this way!");
         if (strlen(c1.get_cstring())>10) Rcout << c1.get_cstring() << " \n";
         if (calcN && (!Nin_sl.isNull() || !Cin_sl.isNull()) )
@@ -599,7 +601,7 @@ sorcering(
         NumericMatrix A_sl_(nr_pools,nr_pools); 
         A_sl0_ = generate_input_matrix(A_sl, 0,0,"A_sl",nr_pools,0); //take from first list element
     }
-  
+
     arma::mat A_arma = as<arma::mat>(A_);
     arma::mat A_arma_yasso_standard = A_arma; //define A_arma_yasso_standard here. No need to calculate A_arma for every stand. Only depends on parameters.
     
@@ -611,7 +613,7 @@ sorcering(
         if (!multisite || A_sl.isNull()) nr_pools = A_arma.n_rows;   
         if (multisite && A_sl.isNotNull()) nr_pools = A_sl0_.nrow();  
     }
-  
+
     //wood stuff
     bool wood = false;
     if ((multisite && Cin_wood_sl.isNotNull()) || (!multisite && Cin_wood.isNotNull()) ) wood = true;
@@ -621,21 +623,20 @@ sorcering(
         List list_Nin_wood(Nin_wood);
         int Cin_wood_size=-1;
         int Nin_wood_size=-1;
-        
-        if (!contains_list(list_Cin_wood,1)) //contains list -> uncertain, do not check here
+          
+        if (!contains_list(list_Cin_wood,0)) //contains list -> uncertain, do not check here
         {
             Cin_wood_size = list_Cin_wood.size();   
             wood_sz = Cin_wood_size;
             check_list(list_Cin_wood, "Cin_wood", 1, "", -1 );
         }
-        if (calcN && !contains_list(list_Nin_wood,1))
+        if (calcN && !contains_list(list_Nin_wood,0))
         {
             Nin_wood_size = list_Nin_wood.size();
             check_list(list_Nin_wood, "Nin_wood", 1, "", -1 );
         }
         if (Cin_wood_size !=Nin_wood_size && Cin_wood_size>0 && Nin_wood_size>0) throw exception("Cin_wood and Nin_wood must have the same number of wood layers!"); 
     }
-    
     //////////////////////////////////////////
     // new with v1.1.0, read t_sim from Cin //
     //////////////////////////////////////////
@@ -660,13 +661,13 @@ sorcering(
                     if (contains_list(Cin_wood_list_,0)) //wood and uncertain
                     {    
                         List Cin_wood_u_list_ = generate_input_list(Cin_wood_list_, 0,0,"Cin_wood_list_","site"); 
-                        check_list(Cin_wood_u_list_, "Cin_wood_sl", 0, "", 0 );
+                        check_list(Cin_wood_u_list_, "Cin_wood_sl", 1, "", 0 );
                         NumericMatrix Cin_wood_sl_0 = generate_input_matrix(Cin_wood_u_list_,0,0,"At least one uncertainty layer of Cin_wood_sl",nr_pools,0); 
                         Cin_rows=Cin_wood_sl_0.nrow(); 
                     }
                     else
                     {
-                        check_list(Cin_wood_list_, "Cin_wood_sl", 0, "", 0 );
+                        check_list(Cin_wood_list_, "Cin_wood_sl", 1, "", -1 );
                         NumericMatrix Cin_wood_sl_0 = generate_input_matrix(Cin_wood_list_, 0,0,"Cin_wood_sl",nr_pools,0); 
                         Cin_rows=Cin_wood_sl_0.nrow();                        
                     }
@@ -701,26 +702,31 @@ sorcering(
             }
             t_list.push_back(Cin_rows);
         }  
-
     }
     else
     {
-        if (wood)
+        if (wood) 
         {
             if (Cin_wood.isNotNull()) 
             { 
                 SEXP Cin_wood0 = generate_input_list(Cin_wood, 0,0,"Cin_wood_sl","site"); 
-                if (TYPEOF(Cin_wood0) == VECSXP) 
-                {
-                    check_list(Cin_wood0, "Cin_wood", 0, "", 0 );
-                    NumericMatrix Cin_wood_0 = generate_input_matrix(Cin_wood0,0,0,"At least one uncertainty layer of Cin_sl",nr_pools,0); 
+                if (contains_list(Cin_wood0,0)) //wood and uncertain
+                {  
+                    List Cin_wood_list_ = generate_input_list(Cin_wood0, 0,0,"Cin_wood_list_","site"); 
+                    check_list(Cin_wood_list_, "Cin_wood", 1, "", 0 );
+                    NumericMatrix Cin_wood_0 = generate_input_matrix(Cin_wood_list_,0,0,"At least one uncertainty layer of Cin_wood_sl",nr_pools,0); 
                     Cin_rows=Cin_wood_0.nrow(); 
                 }
                 else
                 {
-                    NumericMatrix Cin_wood_0(Cin_wood);
-                    Cin_rows=Cin_wood_0.nrow(); 
-                }
+                    List list_Cin_wood(Cin_wood);
+                    if (TYPEOF(Cin_wood0) == VECSXP) 
+                    {
+                        check_list(list_Cin_wood, "Cin_wood", 1, "", -1 );
+                        NumericMatrix Cin_wood_0 = generate_input_matrix(list_Cin_wood, 0,0,"Cin_wood",nr_pools,0); 
+                        Cin_rows=Cin_wood_0.nrow();   
+                    }
+                }                
             }  
         }
         else
@@ -754,7 +760,7 @@ sorcering(
     //////////////////////////////////////////
     // end read t_sim from Cin ///////////////
     //////////////////////////////////////////
-
+    
     int tsim=Cin_rows;
     int tspin=t_spin;
  
@@ -778,6 +784,7 @@ sorcering(
     NumericMatrix thetamat_ ;
     NumericVector thetafac_ (thetacol);
     NumericVector CN_spin_ (0);
+    arma::vec RothC_dpmrpm_arma=RothC_dpmrpm;
     
     if (C0.isNotNull()) C0_=C0;
     if (C0_fracts.isNotNull())  C0_fracts_=C0_fracts;
@@ -789,7 +796,7 @@ sorcering(
     if (N0.isNotNull()) N0_=N0;
     if (site.isNotNull()) site_=site;
     if (CN_spin.isNotNull()) CN_spin_=CN_spin;
-   
+
     //model parameters
     if (theta.isNotNull()) 
     { 
@@ -851,7 +858,7 @@ sorcering(
     arma::rowvec wood_xi(nr_pools,arma::fill::ones);
     NumericVector wood_diam_; 
     if (wood_diam.isNotNull()) wood_diam_=wood_diam;
-     
+
     //variable transformation due to R_NilValue
     if (!multisite)
     {
@@ -905,8 +912,8 @@ sorcering(
         {   
             NumericMatrix env_inX(env_in);
             env_in_=env_inX;
-            if (env_in_.nrow()!=tsim) throw exception( "env_in has not the right number of rows (number of time steps). Make it match C input! ");      
-
+            if ((timediv!=1) && (env_in_.nrow()!=tsim)) throw exception( "env_in has not the right number of rows (number of time steps). Make it match C input! ");
+            if ((timediv==1) && (env_in_.nrow()!=tsim*12)) throw exception( "env_in has not the right number of rows (number of time steps). Make it match C input times 12 when using annual timesteps! ");
         }
         if (Cin_wood.isNotNull())
         {
@@ -957,7 +964,7 @@ sorcering(
                             }
                
                         }
-                        
+                   
                         NumericMatrix A_sl_(nr_pools,nr_pools); 
                         NumericMatrix Cin_sl_(tsim_list_,nr_pools); 
                         NumericMatrix Nin_sl_ = Cin_sl_/10;
@@ -980,24 +987,25 @@ sorcering(
                         List Cin_wood_u_;
                         List Nin_wood_u_;
                         NumericVector wood_diam_sl_;  
-                        
+                        double dpmrpm;
+                  
                         int unc_length=1;
                         if (theta_n_unc>1 && theta_unc.isNotNull()) unc_length=theta_n_unc;
                         List listout_list_unc; // total list with uncertainties includes all listout_lists
                         List listout_unc; // total list with uncertainties 
-                      
+        
                         if (!multisite)
                         {
                             String c25="";   
                             if (wood)
                             {
-                                if (contains_list(Cin_wood_,1))
+                                if (contains_list(Cin_wood_,0))
                                 {
                                     cin_uncertain=true;
                                     Cin_wood_u_= Cin_wood_;
                                     unc_length = Cin_wood_.size();                   
                                 }
-                                if (calcN==true && contains_list(Nin_wood_,1))
+                                if (calcN==true && contains_list(Nin_wood_,0))
                                 {
                                     nin_uncertain=true;
                                     Nin_wood_u_= Nin_wood_;
@@ -1027,7 +1035,8 @@ sorcering(
                                 }
                             if (strlen(c25.get_cstring())>10) throw exception(c25.get_cstring());  
                             
-                        }                       
+                        }   
+   
                         if (multisite) 
                         {
                             if (sitelist.isNotNull()) 
@@ -1039,7 +1048,7 @@ sorcering(
                             ///////////////////////////////////////
                             //data type check for multisite
                             ///////////////////////////////////////
-                            
+                     
                             List listCin(Cin_sl);
                             List listNin(Nin_sl);
                             List listxi(xi_sl);
@@ -1082,7 +1091,7 @@ sorcering(
                                 List listCin_w(Cin_wood_sl);
                                 List list_Cin_wood(listCin_w[el_lists]);
                                 
-                                if (!contains_list(list_Cin_wood,1)) //contains list -> uncertain, do not check here
+                                if (!contains_list(list_Cin_wood,0)) //contains list -> uncertain, do not check here
                                 {   
                                     int Cin_wood_size = list_Cin_wood.size();
                                     wood_sz = Cin_wood_size;
@@ -1126,7 +1135,7 @@ sorcering(
                                     Nin_sl_ = generate_input_matrix(Nin_sl, el_lists,list_length,"Nin_sl",nr_pools,tsim_list_); 
                                 }
                             }
-               
+
                             if (C0_sl.isNotNull()) C0_sl_ = generate_input_vector(C0_sl, el_lists,list_length,"C0_sl",nr_pools);
                             if (N0_sl.isNotNull()) N0_sl_ = generate_input_vector(N0_sl, el_lists,list_length,"N0_sl",nr_pools);
                             if (CN_spin_sl.isNotNull() && spinup) CN_spin_sl_ = generate_input_vector(CN_spin_sl, el_lists,list_length,"CN_spin_sl",nr_pools);
@@ -1149,7 +1158,7 @@ sorcering(
                             if (calcN==true && Nin_wood_sl.isNotNull()) 
                             {
                                 Nin_wood_u_list_ = generate_input_list(Nin_wood_sl, el_lists,list_length,"Nin_wood_sl","site");
-                                if (contains_list(Nin_wood_u_list_,1)) 
+                                if (contains_list(Nin_wood_u_list_,0)) 
                                 {
                                     nin_uncertain=true;
                                     if (Nin_wood_u_list_.size() != unc_length && unc_length>1) c3c +=("When using uncertainties for Nin_wood and Cin_wood, both inputs must have same length! ");
@@ -1170,7 +1179,7 @@ sorcering(
                                     Nin_wood_sl_= generate_input_list(Nin_wood_sl, el_lists,0,"Nin_sl","site"); 
                                 }
                             }
-                            
+                  
                             if (xi_sl.isNotNull()) 
                             {   
                                 if (contains_list(xi_sl,el_lists)) 
@@ -1186,6 +1195,8 @@ sorcering(
                                     xi_sl_ = generate_input_matrix(xi_sl, el_lists,list_length,"xi_sl",nr_pools,tsim_list_); 
                                 }
                             }    
+                            if (RothC_dpmrpm_arma.n_elem<(list_length) && model.get_cstring()==rothc && RothC_dpmrpm_arma.n_elem>1) c3c +=("Fewer RothC_dpmrpm arguments than sites!");
+                            if (any(RothC_dpmrpm_arma<=0)) c3c +=("Some RothC_dpmrpm arguments are <= 0!");
                             if (strlen(c3c.get_cstring())>10) throw exception(c3c.get_cstring()); 
                             
                             if (wood_diam_sl.isNotNull()) wood_diam_sl_ = generate_input_vector(wood_diam_sl, el_lists,list_length,"wood_diam_sl",0);
@@ -1200,7 +1211,11 @@ sorcering(
                                 CNbio=CN_bio_slXX[el_lists];
                             }   
                             if (meas_data_sl.isNotNull()) meas_data_sl_ = generate_input_matrix(meas_data_sl, el_lists,list_length,"meas_data_sl",0,tsim_list_);
-                            if (env_in_sl.isNotNull()) env_in_sl_ = generate_input_matrix(env_in_sl, el_lists,list_length,"env_in_sl",0,tsim_list_);    
+                            if (env_in_sl.isNotNull()) 
+                            {
+                                if (timediv!=1) env_in_sl_ = generate_input_matrix(env_in_sl, el_lists,list_length,"env_in_sl",0,tsim_list_); 
+                                if (timediv==1) env_in_sl_ = generate_input_matrix(env_in_sl, el_lists,list_length,"env_in_sl",0,tsim_list_*12);
+                            }
                         }  
 
                         arma::mat xi_arma = as<arma::mat>(xi_); //here defined, filled later
@@ -1234,7 +1249,7 @@ sorcering(
                         arma::mat wood_xi_slice(wood_sz, nr_pools,arma::fill::ones);
      
                         if (model_def && !cin_uncertain && !nin_uncertain && Rf_isMatrix(theta)) unc_length=thetamat_.nrow(); //model defined but only theta defines uncertainties
-                    
+              
                         for (int uncert=0; uncert<unc_length; uncert++)
                         { 
                                                 unsigned int nr_p_unsi = nr_pools;
@@ -1244,6 +1259,8 @@ sorcering(
                                                     if (spinup) tspin=tspin_list_;
                                                 }
                                                 unsigned int tseqlength_unsi = tsim;
+                                                unsigned int tseqlength_unsi_m = tseqlength_unsi;
+                                                if (timediv==1) tseqlength_unsi_m=tseqlength_unsi*12; //monthly vector length for calculating xi
                                                 int tseqlength = 0;
                                                 if (spinup) tseqlength = tspin;
                                                 else tseqlength = tsim;
@@ -1370,6 +1387,7 @@ sorcering(
 
                                                 arma::cube Cin_wood_arma(cuberow, cubecol, wood_size);
                                                 arma::cube Nin_wood_arma(cuberow, cubecol, wood_size);  
+                                                arma::mat Nin_prev_wood(cuberow, cubecol) ; //to store input sums of previous Nin
                                                      
                                                 arma::vec wood_diam_arma = as<arma::vec>(wood_diam_);
                 
@@ -1409,7 +1427,7 @@ sorcering(
                                                         else CN_spin_arma = as<arma::vec>(CN_spin_sl_);
                                                     }
                                                     xi_arma_generated = as<arma::mat>(xi_sl_); 
-                                                
+                                    
                                                     if (xi_uncertain && !model_def) xi_arma = xi_arma_generated;  //else xi is calculated 
 
                                                     meas_data = as<arma::mat>(meas_data_sl_);
@@ -1429,6 +1447,8 @@ sorcering(
                                                                 Nin_wood_arma.slice(list_elem) = as<arma::mat>(Nin_wood_elem);
                                                             }
                                                         }
+                                                        if (calcN) Nin_prev_wood = sum(Nin_wood_arma,2) ; //to store input sums of previous Nin
+                                                     
                                                     }
                                                 }
                                                 else
@@ -1445,13 +1465,14 @@ sorcering(
                                                                 Nin_wood_arma.slice(list_elem) = as<arma::mat>(Nin_wood_elem);
                                                             }
                                                         }  
+                                                        if (calcN) Nin_prev_wood = sum(Nin_wood_arma,2) ; //to store input sums of previous Nin
                                                     }
                                                 }  
 
                                                 //////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                 //input verification
                                                 //////////////////////////////////////////////////////////////////////////////////////////////////////////    
-                                        
+                                    
                                                 if (el_lists==0 && uncert==0)
                                                 {
                                                     if (model.get_cstring()!=ctool && model.get_cstring()!=ctool_o && CTool_input_raw) Rcout << "Warning! CTool_input_raw only has effect on C-Tool runs"  << " \n";
@@ -1481,20 +1502,25 @@ sorcering(
                                                 
                                                 if (el_lists==0 && uncert==0)
                                                 {
-                                                    if (calcC0)
+                                                    if (calcC0) //hier!! C0_fracts nicht nur bei calcC0, sondern auch wenn C0_arma.n_elem == 1 
                                                     {
                                                         String s00 ="";
-                                                        if (C0_fracts.isNull() && !model_def) s00 +=("When not using a predefined model, calculation of C0 requires definition of C0_fracts!");
                                                         if (meas_data.n_cols<2)   s00 +=("Measured data input must have 2 columns: time, C"); 
-                                                        if (C0_fracts_arma.n_elem != nr_p_unsi) s00 +=(" Length of C0_fracts must match number of pools! ");  
-                                                        if ( (someyasso || !model_def) && ((sum(C0_fracts_arma)<0.9999) || (sum(C0_fracts_arma)>1)) ) s00 +=(" Sum of C0_fracts must be 1! ");  
-                                                        if (( model.get_cstring()==rothc && C0_fracts.isNotNull()) && ((sum(C0_fracts_arma)<0.9999) || (sum(C0_fracts_arma)>1)) )s00 +=(" Sum of C0_fracts must be 1! ");  
+                                                        if (strlen(s00.get_cstring())>10) throw exception(s00.get_cstring());
+                                                    }
+                                                    if (calcC0 || C0_arma.n_elem == 1) 
+                                                    {
+                                                        String s000 ="";
+                                                        if (C0_fracts.isNull() && !model_def) s000 +=("When not using a predefined model, calculation of C0 requires definition of C0_fracts!");
+                                                        if (C0_fracts_arma.n_elem != nr_p_unsi) s000 +=(" Length of C0_fracts must match number of pools! ");  
+                                                        if ( (someyasso || !model_def) && ((sum(C0_fracts_arma)<0.9999) || (sum(C0_fracts_arma)>1)) ) s000 +=(" Sum of C0_fracts must be 1! ");  
+                                                        if (( model.get_cstring()==rothc && C0_fracts.isNotNull()) && ((sum(C0_fracts_arma)<0.9999) || (sum(C0_fracts_arma)>1)) )s000 +=(" Sum of C0_fracts must be 1! ");  
                                                         if ( model.get_cstring()==ctool )
                                                         {
-                                                            if ( (C0_fracts_arma(0)+C0_fracts_arma(1)+C0_fracts_arma(2)<0.9999) || (C0_fracts_arma(0)+C0_fracts_arma(1)+C0_fracts_arma(2)>1))  s00 +=(" Sum of topsoil of C0_fracts (first 3 numbers) must be 1 (with C-Tool)! ");  
+                                                            if ( (C0_fracts_arma(0)+C0_fracts_arma(1)+C0_fracts_arma(2)<0.9999) || (C0_fracts_arma(0)+C0_fracts_arma(1)+C0_fracts_arma(2)>1))  s000 +=(" Sum of topsoil of C0_fracts (first 3 numbers) must be 1 (with C-Tool)! ");  
                                                         }
-                                                        if (any (C0_fracts_arma <0) || any (C0_fracts_arma>1)) s00 +=(" Unrealistic C0_fracts! ");  
-                                                        if (strlen(s00.get_cstring())>10) throw exception(s00.get_cstring());
+                                                        if (any (C0_fracts_arma <0) || any (C0_fracts_arma>1)) s000 +=(" Unrealistic C0_fracts! ");  
+                                                        if (strlen(s000.get_cstring())>10) throw exception(s000.get_cstring());
                                                     }
 
                                                     if (calcN0)
@@ -1556,7 +1582,7 @@ sorcering(
                                                     if (model_def && yasso15up && theta_arma.n_elem != 30 ) s5 +=(" Parameter vector (theta) of Yasso > version 15 must contain 30 numbers!"); 
                                                     if (model_def && model.get_cstring()==rothc && any(theta_arma < 0) ) s5 +=(" Parameter vector (theta) of RothC must not contain negative values!"); 
                                                     if (model_def && model.get_cstring()==rothc && env_in_arma.n_cols != 4 ) s5 +=(" Data frame for xi calculation (env_in) of RothC needs four columns: T, p, ETP and information on crop (0 or 1)! ");  
-                                                    if (model_def && (model.get_cstring()==ctool || model.get_cstring()==ctool_o) && tsteps.get_cstring()==annually) s5 +=(" xi calculation (env_in) of C-Tool at the moment only for monthly resolution at minimum. ");
+                                                    //if (model_def && (model.get_cstring()==ctool || model.get_cstring()==ctool_o) && tsteps.get_cstring()==annually) s5 +=(" xi calculation (env_in) of C-Tool at the moment only for monthly resolution at minimum. ");
                                                     if (strlen(s5.get_cstring())>10) s1+=s5;  
                                                     if (wood)
                                                     {
@@ -1569,7 +1595,7 @@ sorcering(
                                                     if (model_def)
                                                     {
                                                         if (model.get_cstring()==rothc && env_in_arma.n_cols!=4) s8 +=(" Modelling with RothC requires 'env_in' with 4 columns. Please define env_in correctly (T, p, ETP and crop info)! ");
-                                                        if ((model.get_cstring()==ctool || model.get_cstring()==ctool_o )  && env_in_arma.n_cols!=2) s8 +=(" Modelling with C-Tool requires 'env_in' with 2 columns. Please define env_in correctly (T, p)! ");
+                                                        if ((model.get_cstring()==ctool || model.get_cstring()==ctool_o )  && env_in_arma.n_cols!=1) s8 +=(" Modelling with C-Tool requires 'env_in' with 1 column of T. Please define env_in correctly! ");
                                                         if (someyasso  && env_in_arma.n_cols!=2) s8 +=(" Modelling with Yasso requires 'env_in' with 2 columns. Please define env_in correctly (T, p)! ");
                                                         if (strlen(s8.get_cstring())>10) throw exception(s8.get_cstring());
                                                         
@@ -1600,7 +1626,7 @@ sorcering(
                                                         if (strlen(s6.get_cstring())>10) s1+=s7;
                                                     }
                                                 }  
-                                        
+                                
                                                 //check Cin and Nin specific stuff for every uncert
                                                 if (model_def)
                                                 {
@@ -1648,34 +1674,81 @@ sorcering(
                                                         
                                                         arma::colvec Tvec = env_in_arma.col(0);  
                                                         arma::colvec pvec = env_in_arma.col(1);
-                                                        if (timediv>1)
+  
+                                                        int timediv_prec; //when annual mode devide by 12, because environmental input must be monthly
+                                                        if (timediv==1) timediv_prec = 12;
+                                                        else timediv_prec = timediv;
+                                                        int n_yrs = ceil(tseqlength_unsi_m/timediv_prec);
+                                                        int maxpos = pvec.n_elem-1;
+                                                        for(int ys=0; ys<n_yrs; ys++) 
                                                         {
-                                                            int n_yrs = ceil(tseqlength_unsi/timediv);
-                                                            int maxpos = pvec.n_elem-1;
-                                                            for(int ys=0; ys<n_yrs; ys++) 
-                                                            {
-                                                                double prec_sum;
-                                                                prec_sum = sum(  pvec( arma::span(1+timediv*ys,std::min(timediv*(ys+1),maxpos) ) ) )/1000.0; //calculate annual precipitation, leave out first row
-                                                                pvec( arma::span(1+timediv*ys,std::min(timediv*(ys+1),maxpos))).fill(prec_sum); //each time step in year gets annual precipitation
-                                                                if (ys==0) pvec(0)=prec_sum; // we do not want to extrapolate therefore first value after one month is value at zero
-                                                            }
-                                                        }
-                                                        if (timediv==1) pvec/=1000;   
-                                                        
+                                                            double prec_sum;
+                                                            prec_sum = sum(  pvec( arma::span(1+timediv_prec*ys,std::min(timediv_prec*(ys+1),maxpos) ) ) )/1000.0; //calculate annual precipitation, leave out first row
+                                                            pvec( arma::span(1+timediv_prec*ys,std::min(timediv_prec*(ys+1),maxpos))).fill(prec_sum); //each time step in year gets annual precipitation
+                                                            if (ys==0) pvec(0)=prec_sum; // we do not want to extrapolate therefore first value after one month is value at zero
+                                                        }  
                                                         if (yasso15up)
                                                         {
                                                             arma::colvec T1 = fT_yasso(Tvec, pvec, theta_arma(18),theta_arma(19),theta_arma(24));// 0.0905980470, -0.0002144096, -1.8089202000); //22,23,28  
                                                             arma::colvec T2 = fT_yasso(Tvec, pvec, theta_arma(20),theta_arma(21),theta_arma(25));// 4.877247e-02, -7.913602e-05, -1.172547e+00); //24,25,29
-                                                            arma::colvec T3 = fT_yasso(Tvec, pvec, theta_arma(22),theta_arma(23),theta_arma(26));// 3.518549e-02, -2.089906e-04, -1.253595e+01); //26,27,30 
-                                                            xi_arma.col(0) = T1;
-                                                            xi_arma.col(1) = T1;
-                                                            xi_arma.col(2) = T1;
-                                                            xi_arma.col(3) = T2;
-                                                            xi_arma.col(4) = T3; 
+                                                            arma::colvec T3 = fT_yasso(Tvec, pvec, theta_arma(22),theta_arma(23),theta_arma(26));// 3.518549e-02, -2.089906e-04, -1.253595e+01); //26,27,30                        
+                                                            if (timediv==1) //when tsteps annually calculate xi first then take mean of year
+                                                            {
+                                                                arma::colvec monthly_xi_T1(tseqlength_unsi_m);
+                                                                arma::colvec annual_xi_T1(tseqlength_unsi);
+                                                                arma::colvec monthly_xi_T2(tseqlength_unsi_m);
+                                                                arma::colvec annual_xi_T2(tseqlength_unsi);
+                                                                arma::colvec monthly_xi_T3(tseqlength_unsi_m);
+                                                                arma::colvec annual_xi_T3(tseqlength_unsi);
+                                                                monthly_xi_T1 = T1;
+                                                                monthly_xi_T2 = T2;
+                                                                monthly_xi_T3 = T3; 
+
+                                                                for(unsigned int i_a=0; i_a<tseqlength_unsi; i_a++) 
+                                                                {                  
+                                                                    arma::colvec year_vec_T1(12);
+                                                                    arma::colvec year_vec_T2(12);
+                                                                    arma::colvec year_vec_T3(12);
+                                                                    year_vec_T1 = monthly_xi_T1(arma::span(i_a*12,i_a*12+11));
+                                                                    annual_xi_T1(i_a) = arma::mean(year_vec_T1);
+                                                                    year_vec_T2 = monthly_xi_T2(arma::span(i_a*12,i_a*12+11));
+                                                                    annual_xi_T2(i_a) = arma::mean(year_vec_T2);
+                                                                    year_vec_T3 = monthly_xi_T3(arma::span(i_a*12,i_a*12+11));
+                                                                    annual_xi_T3(i_a) = arma::mean(year_vec_T3);
+                                                                }
+                                                               
+                                                                xi_arma.col(0) = annual_xi_T1;
+                                                                xi_arma.col(1) = annual_xi_T1;
+                                                                xi_arma.col(2) = annual_xi_T1;
+                                                                xi_arma.col(3) = annual_xi_T2;
+                                                                xi_arma.col(4) = annual_xi_T3; 
+                                                            }
+                                                            if (timediv!=1)                                                      
+                                                            {
+                                                                xi_arma.col(0) = T1;
+                                                                xi_arma.col(1) = T1;
+                                                                xi_arma.col(2) = T1;
+                                                                xi_arma.col(3) = T2;
+                                                                xi_arma.col(4) = T3; 
+                                                            }
                                                         }
                                                         if (model.get_cstring()==yasso07)
                                                         {
                                                             arma::colvec T1 = fT_yasso(Tvec, pvec, theta_arma(18), theta_arma(19), theta_arma(20));  
+                                                            if (timediv==1) //when tsteps annually calculate xi first and then take mean of year
+                                                            {
+                                                                arma::colvec monthly_xi_T1(tseqlength_unsi_m);
+                                                                arma::colvec annual_xi_T1(tseqlength_unsi);
+                                                                monthly_xi_T1 = T1;
+                                                                
+                                                                for(unsigned int i_a=0; i_a<tseqlength_unsi; i_a++) 
+                                                                {                  
+                                                                    arma::colvec year_vec_T1(12);
+                                                                    year_vec_T1 = monthly_xi_T1(arma::span(i_a*12,i_a*12+11));
+                                                                    annual_xi_T1(i_a) = arma::mean(year_vec_T1);
+                                                                }
+                                                                xi_arma.each_col()= annual_xi_T1;
+                                                            }
                                                             xi_arma.each_col() = T1;
                                                         }
                                                     }
@@ -1702,17 +1775,19 @@ sorcering(
                                                         arma::colvec ETPvec = env_in_arma.col(2);
                                                         arma::colvec Cropvec = env_in_arma.col(3);
                                                         arma::colvec RateT = env_in_arma.col(0);
+                        
                                                         
-                                                        arma::colvec RateW(tseqlength_unsi); 
-                                                        arma::colvec RateWb(tseqlength_unsi); 
-                                                        arma::colvec MaxTSMD(tseqlength_unsi); 
-                                                        arma::colvec MaxTSMDb(tseqlength_unsi); //1.0.1
-                                                        arma::colvec Mvec(tseqlength_unsi); 
-                                                        arma::colvec RateC(tseqlength_unsi); 
+                                                        arma::colvec RateW(tseqlength_unsi_m); 
+                                                        arma::colvec RateWb(tseqlength_unsi_m); 
+                                                        arma::colvec MaxTSMD(tseqlength_unsi_m); 
+                                                        arma::colvec MaxTSMDb(tseqlength_unsi_m); //1.0.1
+                                                        arma::colvec Mvec(tseqlength_unsi_m); 
+                                                        arma::colvec RateC(tseqlength_unsi_m); 
                                                     
-                                                        for(unsigned int iw=0; iw<tseqlength_unsi; iw++) 
+                                                        for(unsigned int iw=0; iw<tseqlength_unsi_m; iw++) 
                                                         {
                                                             if (Tvec(iw) > -18.27) RateT(iw) = 47.91/(1 + exp(106.06/(Tvec(iw) + 18.27)));
+                                                            //if (Tvec(iw) > -18.3) RateT(iw) = 47.9/(1 + exp(106/(Tvec(iw) + 18.3)));
                                                             else RateT(iw) = 0;
                                                         }
                                                         MaxTSMD.fill (-(20 + 1.3 * clay - 0.01 * pow(clay,2)) * (site_arma(0)/23)/1.8);   
@@ -1732,20 +1807,29 @@ sorcering(
                                                         if (Mvec(0)>0) RateW(0)=0;
                                                         else RateW(0)=Mvec(0);
                                                         if (RateW(0)<=MaxTSMD(0)) RateW(0)=MaxTSMD(0); //ab 1.0.1
-                                                        for(unsigned int iw=1; iw<tseqlength_unsi; iw++) 
+                                                        for(unsigned int iw=1; iw<tseqlength_unsi_m; iw++) 
                                                         {
                                                             if (RateW(iw-1)+Mvec(iw)<0) RateW(iw)=RateW(iw-1)+Mvec(iw);
                                                             else RateW(iw)=0;
                                                             if (RateW(iw)<=MaxTSMD(iw)) RateW(iw)=MaxTSMD(iw);
                                                         }
-                                                        for(unsigned int iw=0; iw<tseqlength_unsi; iw++) 
+                                                        for(unsigned int iw=0; iw<tseqlength_unsi_m; iw++) 
                                                         {
                                                             if (RateW(iw)>=0.444*MaxTSMDb(iw)) RateWb(iw)=theta_arma(5);
                                                             else RateWb(iw)=(theta_arma(6) + (theta_arma(5)-theta_arma(6)) * ((MaxTSMDb(iw)-RateW(iw))/(MaxTSMDb(iw) - 0.444 * MaxTSMDb(iw))));
                                                         }
                                                         RateC.fill(1);
-                                                        for(const unsigned int& critid: critids) RateC(critid)=0.6; //soil coverage factor              
-                                                        xi_arma.each_col() = RateT % RateWb % RateC; 
+                                                        for(const unsigned int& critid: critids) RateC(critid)=0.6; //soil coverage factor  
+                                                        
+                                                        if (timediv==1) //annual mode: calculate xi first and then take mean of year
+                                                        {
+                                                            arma::colvec monthly_xi(tseqlength_unsi_m);
+                                                            arma::colvec annual_xi(tseqlength_unsi);
+                                                            monthly_xi = RateT % RateWb % RateC; 
+                                                            for(unsigned int i_a=0; i_a<tseqlength_unsi; i_a++) annual_xi(i_a) = arma::mean(monthly_xi(arma::span(i_a*12,i_a*12+11)));
+                                                            xi_arma.each_col() = annual_xi; 
+                                                        }
+                                                        if (timediv!=1) xi_arma.each_col() = RateT % RateWb % RateC;  
                                                     }   
 
                                                     if (model.get_cstring()==ctool || model.get_cstring()==ctool_o)
@@ -1763,7 +1847,7 @@ sorcering(
                                                         double ai6_5 = theta_arma(8)*theta_arma(4); //from HUMs to ROMs
                                                         double ai5_5 = (1-theta_arma(7)-theta_arma(8))*theta_arma(4); //from HUMs to HUMs
                                                         double ai6_6 = (1-theta_arma(7))*theta_arma(5); //from ROMs to ROMs
-
+   
                                                         arma::mat A1(6,6,arma::fill::zeros);
                                                         arma::rowvec ks ({theta_arma(0),theta_arma(1),theta_arma(2),theta_arma(3),theta_arma(4),theta_arma(5)});
                                                         A1.diag() = -ks;               
@@ -1781,20 +1865,26 @@ sorcering(
                            
                                                         if (uncert==0)
                                                         {
+                                                            int timediv_level0; //when annual mode also 12, because environmental input must be monthly
+                                                            if (timediv==1) timediv_level0 = 12;
+                                                            else timediv_level0 = timediv;
+                                                        
                                                             arma::vec Tvec = env_in_arma.col(0); 
-                                                            arma::vec doy (timediv); 
+                                                            arma::vec doy (timediv_level0); 
                                                             arma::mat T_est (Tvec.n_elem,2);
-                                                            int years = Tvec.n_elem/timediv;
+                                                            int years = Tvec.n_elem/timediv_level0;
                                                             double offset = 110;
+                                                            arma::vec ft_t (tsim);
+                                                            arma::vec ft_s (tsim);
                  
-                                                            doy = arma::regspace(0,timediv-1)*365.25/timediv+365.25/timediv*0.5;   //für monatlich =({15.21875,45.65625,76.09375,106.53125,136.96875,167.40625,197.84375,228.28125,258.71875,289.15625,319.59375,350.03125});
+                                                            doy = arma::regspace(0,timediv_level0-1)*365.25/timediv_level0+365.25/timediv_level0*0.5;   //monthly & annually: =({15.21875,45.65625,76.09375,106.53125,136.96875,167.40625,197.84375,228.28125,258.71875,289.15625,319.59375,350.03125});
   
                                                             for (int dpth=2; dpth<4; dpth++) //adäquat zu 2. und 3. Spalte von T.est in call.calculate_sote_from_monthly_data_areezo.R
                                                             {
                                                                 for (int year=0; year<years;year++)
                                                                 { 
-                                                                    int firstelem = timediv*year;
-                                                                    int lastelem = timediv*year+timediv-1;                                                                   
+                                                                    int firstelem = timediv_level0*year;
+                                                                    int lastelem = timediv_level0*year+timediv_level0-1;                                                                   
                                                                     arma::vec subT = Tvec.subvec(firstelem,lastelem);
                                                                     double avgTemperature = mean(subT);
 
@@ -1810,9 +1900,21 @@ sorcering(
                                                                     T_est(arma::span(firstelem,lastelem),dpth-2) = retVal;
                                                                 }
                                                             }
-                                                            arma::vec ft_t = 7.24*exp(-3.432+0.168*T_est.col(0)%(1-0.5*T_est.col(0)/36.9));
-                                                            arma::vec ft_s = 7.24*exp(-3.432+0.168*T_est.col(1)%(1-0.5*T_est.col(1)/36.9));
-                                
+                                                            if (timediv==1) //annual mode
+                                                            {
+                                                                arma::mat T_est_annual (floor(Tvec.n_elem/12),2);
+                                                                for(unsigned int i_a=0; i_a<tseqlength_unsi; i_a++) 
+                                                                {
+                                                                    ft_t(i_a) = arma::mean(7.24*exp(-3.432+0.168*T_est(arma::span(i_a*12,i_a*12+11),0)%(1-0.5*T_est(arma::span(i_a*12,i_a*12+11),0)/36.9)));
+                                                                    ft_s(i_a) = arma::mean(7.24*exp(-3.432+0.168*T_est(arma::span(i_a*12,i_a*12+11),1)%(1-0.5*T_est(arma::span(i_a*12,i_a*12+11),1)/36.9)));   
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                ft_t = 7.24*exp(-3.432+0.168*T_est.col(0)%(1-0.5*T_est.col(0)/36.9));
+                                                                ft_s = 7.24*exp(-3.432+0.168*T_est.col(1)%(1-0.5*T_est.col(1)/36.9));                                                             
+                                                            }
+                                                            
                                                             xi_arma.col(0) = ft_t;
                                                             xi_arma.col(1) = ft_t;
                                                             xi_arma.col(2) = ft_t;
@@ -1845,7 +1947,7 @@ sorcering(
                                                     Nin_arma.col(4)= Nin_raw.col(1)*fhum;
                                                     Nin_arma.col(5).fill(0); 
                                                 }  
- 
+
                                                 //////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                 //initial CN ratio estimation
                                                 //////////////////////////////////////////////////////////////////////////////////////////////////////////         
@@ -1944,11 +2046,11 @@ sorcering(
                                                 {
                                                     if(C0.isNotNull() && N0.isNotNull()) CNinit=sum(C0_arma)/sum(N0_arma);
                                                 }
-                                                
+                           
                                                 //////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                 //C0
                                                 ////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-                                                
+                                          
                                                 // if C0 is scalar, use fracts
                                                 if (!calcC0 && C0_arma.n_elem == 1 && nr_p_unsi!=1) 
                                                 {   
@@ -1962,11 +2064,18 @@ sorcering(
                                                         arma::rowvec fractI = {0.59, 0.41, 0};
                                                         arma::rowvec C_in_tot(nr_pools);
                                                         C_in_tot=arma::sum(Cin_arma,0);
+                                                           
+                                                        if (RothC_dpmrpm_arma.n_elem==1) dpmrpm=RothC_dpmrpm_arma(0);
+                                                        else dpmrpm=RothC_dpmrpm_arma(el_lists);
                                                         if (RothC_Cin4C0==TRUE && C_in_tot(1)>0 && C_in_tot(0)>0)
                                                         {
                                                             double fract1 = C_in_tot(0)/(C_in_tot(0)+C_in_tot(1));
                                                             fractI = {fract1, 1-fract1,0} ;
                                                         }
+                                                        if (RothC_Cin4C0==FALSE) //use RothC_dpmrpm 
+                                                        {   
+                                                            fractI = {1/(1+1/dpmrpm), 1/(1+dpmrpm),0};
+                                                        }   
                                                         C0_arma=C0_analyt(CN_sp, mean(xi_arma.col(0)), theta_arma(0), theta_arma(1), theta_arma(2), theta_arma(3), site_arma(1), site_arma(2), C0_arma(0),fractI ) ; 
                                                     }
                                                 }
@@ -2000,10 +2109,11 @@ sorcering(
                                                     List lr2= fastLm(C_C, t_C); 
                                                     arma::colvec lr2coef = lr2["coefficients"];
                                                     
-
                                                     //RothC special
                                                     if ((model.get_cstring()==rothc) && C0_fracts.isNull()) //RothC Rene Standard 
                                                     {
+                                                        if (RothC_dpmrpm_arma.n_elem==1) dpmrpm=RothC_dpmrpm_arma(0);
+                                                        else dpmrpm=RothC_dpmrpm_arma(el_lists);
                                                         double CN_sp = 0.0; //just for initialization. arrived here, 1 of the 2 following should make CN_sp > 0
                                                         if (site_arma(3)>0) CN_sp = site_arma(3);
                                                         if (site_arma(3)==0) CN_sp = CNinit;
@@ -2016,6 +2126,10 @@ sorcering(
                                                             double fract1 = C_in_tot(0)/(C_in_tot(0)+C_in_tot(1));
                                                             fractI = {fract1, 1-fract1,0} ;
                                                         }
+                                                        if (RothC_Cin4C0==FALSE) //use RothC_dpmrpm 
+                                                        {   
+                                                            fractI = {1/(1+1/dpmrpm), 1/(1+dpmrpm),0};
+                                                        }   
                                                         C0_arma=C0_analyt(CN_sp, mean(xi_arma.col(0)), theta_arma(0), theta_arma(1), theta_arma(2), theta_arma(3), site_arma(1), site_arma(2), lr2coef(0),fractI ) ;            
                                                     }
                                                     else C0_arma=lr2coef(0)*C0_fracts_arma; 
@@ -2025,18 +2139,18 @@ sorcering(
                                                         Rcout << "calculated a C0 of: " << C0_r;
                                                     }
                                                 } 
-                                        
+             
                                                 //////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                 //N0 calculation
                                                 ////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-                                                
+                           
                                                 arma::mat Cin_arma_wood(tsim,nr_pools); //define beforehand, later used again
                                                 if (wood) Cin_arma_wood=sum(Cin_wood_arma,2) ;
                                                 if (calcN0 && calcN)  
                                                 {
                                                     //arma::mat Cin_arma_wood(tsim,nr_pools);
                                                     arma::mat Nin_arma_wood(tsim,nr_pools);                       
-                                                    if (wood) {Nin_arma_wood=sum(Nin_wood_arma,2) ;}
+                                                    if (wood) {Nin_arma_wood=Nin_prev_wood ;}
                                                     else
                                                     {
                                                         Cin_arma_wood = Cin_arma;
@@ -2067,7 +2181,7 @@ sorcering(
                                                         Rcout << "\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n"; 
                                                         Rcout << "stand: " << sitelist_ << " \n"; 
                                                     }
-
+   
                                                     for(const unsigned int& pt: fpt) 
                                                     {
                                                         double cn_w;
@@ -2225,7 +2339,7 @@ sorcering(
                                                     N0_arma = as<arma::vec>(N0_);
                                                     if (multisite) N0_arma = as<arma::vec>(N0_sl_);
                                                 }
-                                            
+            
                                                 //////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                 // SOC/SON model core
                                                 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2242,7 +2356,7 @@ sorcering(
                                                 arma::mat K1_sub(1,nr_pools); 
                                                 arma::mat K2_sub(1,nr_pools); 
                                                 arma::mat K3_sub(1,nr_pools); 
-                                                arma::mat cn_sub(1,nr_pools); 
+                                                arma::mat cn_sub(1,nr_pools);  
 
                                                 // N mineralization variables
                                                 NumericMatrix npools_diff(tseqlength,3); 
@@ -2273,10 +2387,8 @@ sorcering(
                                                                     {
                                                                         if ((ts-1)-floor((ts-1)/timediv)*timediv==0) //corresponds to modulo, always start with january when december is over when timediv==12 (month modus)
                                                                         {
-                                                                            //int tsim_xi=xi_arma.n_rows;
                                                                             int tsim_in=Cin_arma.n_rows;
-                                                                            //ts_xi=floor(arma::randu()*(tsim_xi)/timediv)*timediv; //multiple of 12 when timediv==12
-                                                                            ts_in=floor(arma::randu()*(tsim_in)/timediv)*timediv+1; 
+                                                                            ts_in=floor(arma::randu()*(tsim_in)/timediv)*timediv+1; //multiple of 12 when timediv==12
                                                                             ts_xi=ts_in-1;
                                                                         }
                                                                         else 
@@ -2284,8 +2396,8 @@ sorcering(
                                                                             ts_xi++;
                                                                             ts_in++;
                                                                         }
-                                               //   Rcout << "ts" <<  ts << "_" << ts_in << " \n"; 
-                                               // readline("");
+                                                  //Rcout << "ts" <<  ts << "_" << ts_in << " \n"; 
+                                                  //readline("");
                                                                     }
                                                                                        
                                                                     arma::rowvec xi_new_0 = xi_arma.row(std::max(0,ts_xi-1));
@@ -2301,14 +2413,15 @@ sorcering(
                                                                     arma::rowvec Cin_here(nr_pools);
                                                                     arma::rowvec Nin_here(nr_pools);
 
-                                                                    int substeps=1; 
+                                                                    int substeps=1;   
                                                                     arma::rowvec Nin_here_sum(nr_pools);
                                                                     Nin_here_sum.fill(0);
 
                                                                     for (int wood_slice=0; wood_slice < wood_length; wood_slice++)
                                                                     {
-                                                                                                                
-                                                                        double wood_part=1;
+                                                                         
+                                                                        double wood_part=1; 
+                                                                        double wood_part_ss=1; //for some substep calculations would part will be 1, see below 
                                                                     
                                                                         if (wood) 
                                                                         {
@@ -2316,20 +2429,16 @@ sorcering(
                                                                             if (calcN) Nin_here=Nin_wood_arma.slice(wood_slice).row(std::max(0,ts_in-1));
                                                                             if (yasso15up ) 
                                                                             {      
-                                                                                if (ts==1 && uncert==0) 
-                                                                                {
-                                                                                    // poolnr<nr_pools-1: no size dep for last pool 
-                                                                                    if (model_def) for (int poolnr=0; poolnr<nr_pools-1;poolnr++) wood_xi_slice(wood_slice, poolnr)= std::min(1.0,pow( 1+theta_arma(27)*wood_diam_arma(wood_slice)+theta_arma(28)*pow(wood_diam_arma(wood_slice),2.0),-std::abs(theta_arma(29)) ));
-                                                                                    else for (int poolnr=0; poolnr<nr_pools-1;poolnr++) wood_xi_slice(wood_slice, poolnr)= std::min(1.0,pow( 1-0.4389227*wood_diam_arma(wood_slice)+1.267467*pow(wood_diam_arma(wood_slice),2.0),-0.2569142) );
-                                                                                }                                                                              
+                                                                                if (ts==1 && uncert==0) for (int poolnr=0; poolnr<nr_pools-1;poolnr++) wood_xi_slice(wood_slice, poolnr)= std::min(1.0,pow( 1+theta_arma(27)*wood_diam_arma(wood_slice)+theta_arma(28)*pow(wood_diam_arma(wood_slice),2.0),-std::abs(theta_arma(29)) ));
                                                                                 wood_xi=wood_xi_slice.row(wood_slice);
                                                                             }
                                                                             if (sum(Cin_arma_wood.row(std::max(0,ts_in-1))) > 0) wood_part=sum(Cin_here)/sum(Cin_arma_wood.row(std::max(0,ts_in-1)));
                                                                             else 
-                                                                                {  if (wood_slice==0) wood_part=1; //no input? then factor 1 for first slice
+                                                                            {  
+                                                                                if (wood_slice==0) wood_part=1; //no input? then factor 1 for first slice
                                                                                 else wood_part=0;
-                                                                                }
-
+                                                                            }
+                                                                            wood_part_ss=wood_part;
                                                                         }
                                                                         else
                                                                         {  
@@ -2340,7 +2449,7 @@ sorcering(
                                                                         //////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                         //C-Pools calculation
                                                                         //////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                        
+                         
                                                                         bool negatives=TRUE;
 
                                                                         while (negatives)
@@ -2355,13 +2464,15 @@ sorcering(
                                                                                 for(int ss=1; ss<substeps+1; ss++)
                                                                                 {
                                                                                     if (ss>1) xi_new_0_ss=xi_new_1;
+                                                                                    if (ss==1) wood_part_ss = wood_part;
+                                                                                    else wood_part_ss = 1; //because at first substep allready multiplied with wood_part; 
                                                                                     
                                                                                     //Runge Kutta 4th order, produces K1-K4 vectors, which elements correspond to the pools, their mean is calculated below 
-                                                                                    K1=Cin_here/substeps + arma::trans((A_arma * arma::diagmat((wood_xi%xi_new_0_ss)/timediv/substeps)  * arma::trans(cpools_sub.row(ss-1)*wood_part))) ;   
-                                                                                    K2=Cin_here/substeps + arma::trans((A_arma * arma::diagmat((wood_xi%(xi_new_0_ss+xi_new_1))/2/timediv/substeps)  * arma::trans(cpools_sub.row(ss-1)*wood_part+0.5*K1))) ; 
-                                                                                    K3=Cin_here/substeps + arma::trans((A_arma * arma::diagmat((wood_xi%(xi_new_0_ss+xi_new_1))/2/timediv/substeps)  * arma::trans(cpools_sub.row(ss-1)*wood_part+0.5*K2))) ;  
-                                                                                    K4=Cin_here/substeps + arma::trans((A_arma * arma::diagmat((wood_xi%xi_new_1)/timediv/substeps)  * arma::trans(cpools_sub.row(ss-1)*wood_part+K3))) ;
-                                                                                    
+                                                                                    K1=Cin_here/substeps + arma::trans((A_arma * arma::diagmat((wood_xi%xi_new_0_ss)/timediv/substeps)  * arma::trans(cpools_sub.row(ss-1)*wood_part_ss))) ;   
+                                                                                    K2=Cin_here/substeps + arma::trans((A_arma * arma::diagmat((wood_xi%(xi_new_0_ss+xi_new_1))/2/timediv/substeps)  * arma::trans(cpools_sub.row(ss-1)*wood_part_ss+0.5*K1))) ; 
+                                                                                    K3=Cin_here/substeps + arma::trans((A_arma * arma::diagmat((wood_xi%(xi_new_0_ss+xi_new_1))/2/timediv/substeps)  * arma::trans(cpools_sub.row(ss-1)*wood_part_ss+0.5*K2))) ;  
+                                                                                    K4=Cin_here/substeps + arma::trans((A_arma * arma::diagmat((wood_xi%xi_new_1)/timediv/substeps)  * arma::trans(cpools_sub.row(ss-1)*wood_part_ss+K3))) ;
+
                                                                                     if (ss==1) 
                                                                                     {
                                                                                         K1_sub=K1;
@@ -2375,11 +2486,15 @@ sorcering(
                                                                                         K2_sub=join_vert(K2_sub, K2);
                                                                                         K3_sub=join_vert(K3_sub, K3);
                                                                                     }
-                                                                                                                                
+                                                                                                                                 
                                                                                     //mean of Runge-Kutta-Vectors, produces new C for each pool
                                                                                     cpools_sub.row(ss)=(K1+ 2*K2 + 2*K3 +K4)/6+cpools_sub.row(ss-1)*wood_part;
-
-                                                                                    if (any(cpools_sub.row(ss)<0))
+                                                                                    if (ss>1)
+                                                                                    {
+                                                                                        cpools_sub.row(ss)=(K1+ 2*K2 + 2*K3 +K4)/6+cpools_sub.row(ss-1);
+                                                                                    }                                                                
+                                               
+                                                                                    if ( any(cpools_sub.row(ss)<0)) //can happen with annual time steps, then Runge-Kutta 4 does not work, and the time steps must be reduced (here divided by 2)
                                                                                     {
                                                                                         anynegatives=TRUE;
                                                                                         break;
@@ -2394,9 +2509,10 @@ sorcering(
                                                                                         // deltaC = c.pools[ts-1,i] + c.In.here - c.pools[ts,i] = change in each c pool
                                                                                         // deltaN = n.pools[ts-1,i] + n.In.here - n.pools[ts,i] = change in each n pool
                                                                                         // deltaC/c.pools[ts,i] = deltaN/n.pools[ts,i]
-                                                                                        // consequently:                    
-                                                                                        npools_sub.row(ss) = (npools_sub.row(ss-1)*wood_part+Nin_here/substeps) / ( (cpools_sub.row(ss-1)*wood_part+Cin_here/substeps-cpools_sub.row(ss)) / cpools_sub.row(ss) + 1 );
-                                                                                        
+                                                                                        // consequently:   
+
+                                                                                        npools_sub.row(ss) = (npools_sub.row(ss-1)*wood_part_ss+Nin_here/substeps) / ( (cpools_sub.row(ss-1)*wood_part_ss+Cin_here/substeps-cpools_sub.row(ss)) / cpools_sub.row(ss) + 1 );
+                                                                                 
                                                                                         //c.In for pools exist where n.In == 0?
                                                                                         for(int i=0; i<nr_pools;i++)   
                                                                                         {   if (Cin_arma(std::max(0,ts_in-1),i)!=0){
@@ -2415,9 +2531,7 @@ sorcering(
                                                                                             {if ((cpools_sub(ss,i)>0) && (npools_sub(ss-1,i)==0) && (Nin_here(i) ==0) )  
                                                                                                 npools_sub(ss,i) = cpools_sub(ss,i)/ (cpools_sub(ss,0)/npools_sub(ss,0)) ;} //assume that first pools have C and N ... should work if first pool is always the first pool that gets input... worked so far
                                                                                         }
-                                                                   //Rcout << "tsts" <<  npools_sub(1,1) <<" \n"; 
 
-                                                                   
                                                                                         // if spinup starts with zero C0 and NO, CN would be defined via inputs, can be changed with CN_spin
                                                                                         if (spinup && ((!multisite && !CN_spin.isNull()) || (multisite && (!CN_spin_sl.isNull()||!CN_spin.isNull()) ) ))  
                                                                                         {
@@ -2427,8 +2541,6 @@ sorcering(
                                                                                                 {
                                                                                                     npools_sub(ss,i)=cpools_sub(ss,i)/CN_spin_arma(i);
                                                                                                     cn_sub(ss,i) = CN_spin_arma(i);
-                                                                                                
-                                                                            //                    Rcout << "CN_spin_arma" << i << "__"<<CN_spin_arma(i)<< " \n"; 
                                                                                                 }
                                                                                             }
                                                                                         }
@@ -2438,16 +2550,17 @@ sorcering(
                                                                                             if (npools_sub(ss,i)>0) cn_sub(ss,i) = cpools_sub(ss,i)/npools_sub(ss,i);
                                                                                             if (npools_sub(ss,i)==0) cn_sub(ss,i) =9999999;
                                                                                         }
-                                                                                        
-                                                               // readline("");
                                                                                     }   
-                                                                                }                               
-                                                                            if (anynegatives==TRUE) substeps=substeps*2;
+                                                                                }         
+                                                                            if (anynegatives==TRUE) {
+                                                                                substeps=substeps*2;
+                                                                             if (substeps>1024) throw exception("Successive itteration time loop hang. Please try using a finer temporal resolution and report error to sorcering developers!") ;
+                                                                            }
                                                                             if (anynegatives==FALSE) negatives=false;
-                                                                        } //while negatives                                                     
+                                                                        } //while negatives      
+                                        
                                                                         cpools_arma.row(ts)+=cpools_sub.row(substeps);
                                                                         if (calcN) Nin_here_sum += Nin_here;
-
                                                                         if (calcN) npools_arma.row(ts)+=npools_sub.row(substeps);               
                             
                                                                         ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2470,6 +2583,7 @@ sorcering(
                                                                                 {
                                                                                     if (ss>1) xi_new_0_ss=xi_new_1;
                                                                                     
+                                                                                    if (ss>1) wood_part=1;
                                                                                     // Runge Kutta 4th order, produces K1n_mat-K4n_mat matrices, which rows correspond to the N source pools and which columns correspond to N sink pools,
                                                                                     // and produces K1n-K4n vectors that are the colsums = how many N origins from which pool
                                                                                     K1n_mat= A_arma *    arma::diagmat((  cpools_sub.row(ss-1)*wood_part ) % ((wood_xi%xi_new_0_ss)/timediv/substeps));  
@@ -2487,7 +2601,7 @@ sorcering(
                                                                                     K4n_mat= A_arma *    arma::diagmat((  cpools_sub.row(ss-1)*wood_part + K3_sub.row(ss-1) ) % ((wood_xi%xi_new_1)/timediv/substeps));                                 
                                                                                     arma::inplace_trans(K4n_mat);
                                                                                     K4n_mat= K4n_mat * arma::diagmat(1/cn_sub.row(ss));
-                                                                                    
+                        
                                                                                     arma::mat nmin_ss = -(K1n_mat + 2*K2n_mat + 2*K3n_mat + K4n_mat)/6; //N min of single pools
                                                                                     arma::mat nmin_rowsum = arma::sum(nmin_ss,1);
                                                                                     arma::inplace_trans(nmin_rowsum);
@@ -2508,14 +2622,12 @@ sorcering(
                                                                                 }
                                                                                 arma::mat nminrow = arma::zeros(substeps,nr_pools);  
                                                                                 nminrow = arma::sum(nmin_sub,0); // =rowSums
-                                                                                nmin_arma.row(ts) += nminrow;                  
-                                                                                if (wood)  
-                                                                                {   
-                                                                                    arma::mat Nin_prev_wood = sum(Nin_wood_arma,2) ;   
-                                                                                    nmin2_arma.row(ts)=npools_arma.row(ts-1)+ Nin_prev_wood.row(std::max(0,ts_in-1)) - npools_arma.row(ts) ;   
-                                                                                }
-                                                                                else        nmin2_arma.row(ts)=npools_arma.row(ts-1)+ Nin_arma.row(std::max(0,ts_in-1))- npools_arma.row(ts) ;
+                                                                                nmin_arma.row(ts) += nminrow;      
+                                                                                
+                                                                                if (wood) nmin2_arma.row(ts)=npools_arma.row(ts-1)+ Nin_prev_wood.row(std::max(0,ts_in-1)) - npools_arma.row(ts) ;   
+                                                                                else      nmin2_arma.row(ts)=npools_arma.row(ts-1)+ Nin_arma.row(std::max(0,ts_in-1)) - npools_arma.row(ts) ;
                                                                                 for(int i=0; i<nr_pools; i++) nmin_i_cube(arma::span(ts),arma::span::all,arma::span(i)) += nmin_i.row(i);
+                                                                                
                                                                         } //calcN
                                                                     } //wood   
                                        

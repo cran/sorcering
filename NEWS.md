@@ -1,3 +1,65 @@
+Version 1.2.0
+===============================
+
+Changes
+-------
+
+GENERAL CHANGES
+
+- Introduced the new input argument RothC_dpmrpm, which expands the possibilities 
+of intitial C0 calculation for RothC with the described analytical method.
+
+- When tsteps="annually" and "model" is not NULL, so far the annual xi was calculated with annual environmental variables.
+Now monthly environmental variables (via env_in) are required and the annual cycle is much better represented.
+
+- A list of bugs has been fixed.
+
+-------------------------------
+
+DOCUMENTATION
+
+- Description for RothC_dpmrpm.
+
+-------------------------------
+
+VIGNETTE
+
+- Sec. 3.3.2 RothC\
+    Included RothC_dpmrpm.
+
+-------------------------------
+    
+BUGS
+
+- Variable mismatch in RothC analytical calculation! Wrong calculation when model="RothC" and either calcC0 = TRUE and C0_fracts = Null, or 
+calcC0 = FALSE and C0 is a scalar and C0_fracts = Null.
+
+- Scalar C0 elements of C0_sl were not allowed. Now possible.
+
+- When multisite = FALSE, Yasso simulations with wood-input did not run at all!
+Older versions are not recommended when multisite=FALSE, model ="Yasso15" or model="Yasso20" and Cin_wood is used.
+
+- Variable check error when model="C-Tool" or "C-Tool-org". The user needed to use an "env_in" variable of 2 columns, but only 1 column is needed.
+
+- When model="Yasso15" or model="Yasso20", and tsteps="annually", and Cin_wood is not NULL or Cin_wood_sl is not NULL a wrong calculation has been made.
+
+- When tsteps="annually" there might be a risk of a total crash due to a missing iteration check in connection with the numerical method, which has not yet occurred. 
+
+CONSEQUENCES FOR USAGE OF OLDER VERSIONS
+----------------------------------------
+
+- In general: 
+          - Not recommended with annual time steps!
+- RothC: 
+          - Works when C0_fracts is not NULL. Works when calcC0 = FALSE and C0 is not a scalar. 
+- C-Tool:
+          - env_in needs a dummy second column.
+- Yasso15 and Yasso20:
+          - Not working when using single sites and woody input.
+          - Wrong results when using with woody input and annual time steps.
+- All predefined models:
+          - Annual time steps cycles are not considered for the calculation of xi when using annual time steps.
+-------------------------------
 
 Changes in version 1.1.0
 ===============================
