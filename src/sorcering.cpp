@@ -2285,23 +2285,11 @@ sorcering(
                                                             }    
                                                             throw exception(cn1.get_cstring());
                                                         }                    
-                                                    }     
-                                                    //topsoil check for N0 at C0 
-                                                    if (all(C0_arma.elem(find(pt_arma==3) )==0) )//case there is no C in res/inert pools
-                                                    {           //transfer all N to first slow pool
-                                                            N0_arma.elem(find(pt_arma==2,1))+=sum(N0_arma.elem(find(pt_arma==3))); //"..,1))"->only first element
-                                                            N0_arma.elem(find(pt_arma==3)).fill(0);
-                                                            CNbio = arma::conv_to<double>::from( C0_arma.elem(find(pt_arma==2,1))/N0_arma.elem(find(pt_arma==2,1)) );
+                                                    } 
+                                                    
+                                                    //1.2.1 deleted section 'topsoil check for N0 at C0': "if (all(C0_arma.elem(find(pt_arma==3) )==0) )//case there is no C in res/inert pools..." 
+                                                    // is already excluded by "if ( (all(N0_arma.elem(find(pt_arma==3) )==0)) || (all(CN0.elem(find(pt_arma==3) )==0))   )..." see above
 
-                                                        if (all(C0_arma.elem(find(pt_arma==2) )==0) )//case additionally there is no C in bio/hum pools
-                                                        {       //transfer all N to first fast pool
-                                                            N0_arma.elem(find(pt_arma==1,1))+=sum(N0_arma.elem(find(pt_arma==2))); //"..,1))"->only first element
-                                                            N0_arma.elem(find(pt_arma==2)).fill(0);
-                                                            if (init_info == TRUE) Rcout << "\nCaution! Only C0 in fast pools. Is that how it is meant to be? \n"; 
-                                                        }    
-                                                        else if (init_info == TRUE) Rcout << "\nCaution! No C0 in resistant/intert pools. CN ratio of slow pools can be very low. \n"; 
-
-                                                    }
                                                     //subsoil check for N0 at C0 
                                                     if (all(C0_arma.elem(find(pt_arma==6) )==0) )//case there is no C in res/inert pool
                                                     {
@@ -2326,10 +2314,14 @@ sorcering(
                                                         Rcout << "and CN values of   : " << CNcalc ;
                                                         Rcout << "and initial total CN of: " << CNinit  <<"  " << sum(C0_arma)/sum(N0_arma) <<" \n"; 
                                                         
-                                                        double CNres = arma::conv_to<double>::from( C0_arma.elem(find(pt_arma==3,1)) / N0_arma.elem(find(pt_arma==3,1)) );
-                                                        if (CNres < 3  ) 
+                                                        //changed for 1.2.1
+                                                        arma::rowvec CNres_z = C0_arma.elem(find(pt_arma==3,1)) ;
+                                                        arma::rowvec CNres_n = N0_arma.elem(find(pt_arma==3,1)) ;
+                                                        arma::rowvec CNres = CNres_z / CNres_n;
+
+                                                        if (CNres(0) < 3  ) 
                                                         {
-                                                            Rcout << "CN in resistant/inert pool is very low: " << CNres <<" \n"; 
+                                                            Rcout << "CN in resistant/inert pool is very low: " << CNres(0) <<" \n"; 
                                                             Rcout << "This is most probably due to much more C in slow pools than in resistant/inert pools \n" ;
                                                         }
                                                     }

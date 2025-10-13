@@ -1,3 +1,8 @@
+Version 1.2.1
+===============================
+
+Just some code adaptations to new RcppArmadillo version
+
 Version 1.2.0
 ===============================
 
