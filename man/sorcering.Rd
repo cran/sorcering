@@ -23,7 +23,7 @@ and
 In case a predefined SOC model is used, instead of model parameters and time series of rate modifying factors, 
 model-specific environmental and stand data must be passed for the calculation of decomposition and transfer rates.
 The fourth-order Runge-Kutta algorithm is used to numerically solve the system of differential equations.
-\loadmathjax  
+\loadmathjax
 }
 \usage{
 sorcering(    A = NULL,

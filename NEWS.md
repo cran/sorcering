@@ -1,3 +1,8 @@
+Version 1.2.2
+===============================
+
+Rebuild Package with new mathjaxr
+
 Version 1.2.1
 ===============================
 
